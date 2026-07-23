@@ -1,8 +1,8 @@
-# Privacy Policy for CUPS & IPP Printer Provider
+# Privacy Policy for Cupsie Printer Provider
 
 **Effective Date:** July 23, 2026
 
-This privacy policy explains how the **CUPS & IPP Printer Provider** Chrome extension ("Extension", "we", "us") collects, uses, stores, and protects data when you use the Extension.
+This privacy policy explains how the **Cupsie Printer Provider** Chrome extension ("Extension", "we", "us") collects, uses, stores, and protects data when you use the Extension.
 
 We are committed to maintaining the privacy and security of your personal data. 
 
@@ -42,7 +42,7 @@ We do **not** collect, sell, trade, or transfer your personal data, profile iden
 
 ## 4. Security
 
-The Extension communicates with printers using standard web transport protocols. If you configure secure IPP printer endpoints (using the `ipps://` or `https://` schemes), all network transmissions (including print jobs) are encrypted in transit using industry-standard TLS (Transport Layer Security).
+The Extension communicates with printers using standard web transport protocols. If you configure secure IPP printer endpoints, all network transmissions (including print jobs) are encrypted in transit using industry-standard TLS (Transport Layer Security).
 
 ---
 
@@ -50,5 +50,5 @@ The Extension communicates with printers using standard web transport protocols.
 
 If you have any questions or feedback regarding this Privacy Policy or the security of the Extension, please contact:
 
-- **Support/Developer Email**: `[Your Support/Developer Email Here]`
-- **Project Repository**: `[Your Project Repository Link Here]`
+- **Support/Developer Email**: `[EMAIL_ADDRESS]`
+- **Project Repository**: [github.com/DadArcade/cupsie](https://github.com/DadArcade/cupsie/)

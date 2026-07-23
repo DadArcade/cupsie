@@ -82,3 +82,11 @@ Enterprise IT administrators can deploy and enforce printer configurations acros
 2. Go to **Devices > Chrome > Apps & extensions > Users & browsers**.
 3. Select **Cupsie Printer Provider**.
 4. Under **Policy for extensions**, paste your JSON policy.
+
+---
+
+## Privacy
+
+By default, the extension has access to nothing and does not send any data to external servers. It will request network permission directly from you when adding printers.
+
+For more details, see the full [Privacy Policy](privacy_policy.md).

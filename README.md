@@ -83,7 +83,7 @@ Enterprise IT administrators can deploy and enforce printer configurations acros
 
 ### Deploying via Linux Managed Policy (`/etc/opt/chrome/policies/managed/`)
 
-For Linux managed workstations, save a policy file to `/etc/opt/chrome/policies/managed/cupsie_policy.json` (replace `<EXTENSION_ID>` with your extension's ID). Force-installing the extension automatically grants required host access permissions without user prompts:
+For Linux managed workstations, save a policy file to `/etc/opt/chrome/policies/managed/cupsie_policy.json`. Force-installing the extension automatically grants required host access permissions without user prompts:
 
 ```json
 {

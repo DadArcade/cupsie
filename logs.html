@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title data-i18n="logsPageTitle">Troubleshooting Logs - Printer Provider</title>
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <style>
+    :root {
+      --bg: #f8f9ff;
+      --surface: #ffffff;
+      --border: #e0e2ec;
+      --outline: #74777f;
+      --text: #1a1c1e;
+      --text-muted: #43474e;
+      --primary: #0061a4;
+      --primary-hover: #1976d2;
+      --primary-container: #d1e4ff;
+      --on-primary-container: #001d36;
+      --error: #ba1a1a;
+      --error-container: #ffdad6;
+      --on-error-container: #410002;
+      --success: #1b5e20;
+      --success-container: #d5ebd8;
+      
+      /* Info (M3 light blue secondary-like) */
+      --info-container: #d0e4ff;
+      --on-info-container: #001d36;
+      /* Warn (M3 light orange-yellow) */
+      --warn-container: #ffe082;
+      --on-warn-container: #2c1a00;
+    }
+
+    body {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--primary);
+      margin: 0;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    button, .btn-link {
+      font-family: 'Roboto', sans-serif;
+      font-weight: 500;
+      padding: 10px 22px;
+      border-radius: 100px; /* Fully rounded pill */
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background-color: var(--surface);
+      color: var(--primary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background-color: var(--bg);
+      border-color: var(--outline);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background-color: var(--surface);
+      color: var(--error);
+      border: 1px solid var(--border);
+    }
+    .btn-danger:hover {
+      background-color: var(--error-container);
+      border-color: var(--error);
+      transform: translateY(-1px);
+    }
+
+    .log-container {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .log-header {
+      background-color: rgba(0, 0, 0, 0.02);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      display: grid;
+      grid-template-columns: 190px 100px 1fr;
+    }
+
+    .log-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .log-item {
+      display: grid;
+      grid-template-columns: 190px 100px 1fr;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      align-items: center;
+      transition: background-color 0.15s ease;
+    }
+    .log-item:last-child {
+      border-bottom: none;
+    }
+    .log-item:hover {
+      background-color: rgba(0, 0, 0, 0.01);
+    }
+
+    .time {
+      color: var(--text-muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      width: fit-content;
+    }
+
+    .badge-info {
+      background-color: var(--info-container);
+      color: var(--on-info-container);
+    }
+    .badge-warn {
+      background-color: var(--warn-container);
+      color: var(--on-warn-container);
+    }
+    .badge-error {
+      background-color: var(--error-container);
+      color: var(--error);
+    }
+
+    .message {
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--text);
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .empty-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 data-i18n="logsPageHeader">Troubleshooting Logs</h1>
+      <div class="subtitle" data-i18n="logsSubtitle">Last 24 log entries captured from background operations</div>
+    </div>
+    <div class="btn-group">
+      <button id="refreshBtn" class="btn-secondary" data-i18n="refreshButton">Refresh</button>
+      <button id="downloadBtn" class="btn-primary" data-i18n="downloadLogsButton">Download Log</button>
+      <button id="clearBtn" class="btn-danger" data-i18n="clearLogsButton">Clear Logs</button>
+    </div>
+  </header>
+
+  <div class="log-container">
+    <div class="log-header">
+      <div data-i18n="timestampHeader">TIMESTAMP</div>
+      <div data-i18n="levelHeader">LEVEL</div>
+      <div data-i18n="messageHeader">MESSAGE</div>
+    </div>
+    <ul id="logList" class="log-list">
+      <!-- Logs populated by logs.js -->
+    </ul>
+    <div id="emptyState" class="empty-state" style="display: none;">
+      <div class="empty-icon">📝</div>
+      <p data-i18n="noLogsFound">No troubleshooting logs found. Logs will populate when background actions occur.</p>
+    </div>
+  </div>
+
+  <div style="margin-top: 24px; text-align: right;">
+    <a href="options.html" class="btn-secondary btn-link" data-i18n="backToSettingsLink">&larr; Back to Settings</a>
+  </div>
+
+  <script src="i18n-helper.js"></script>
+  <script src="logs.js"></script>
+</body>
+</html>

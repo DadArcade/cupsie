@@ -1,0 +1,612 @@
+{
+  "extName": {
+    "message": "Cupsie Printer Provider",
+    "description": "The name of the extension."
+  },
+  "extDesc": {
+    "message": "Exposes local CUPS queues and IPP printers into the native Chrome Print Dialog.",
+    "description": "Description of the extension."
+  },
+  "optionsPageTitle": {
+    "message": "Printer Provider Options",
+    "description": "Title of the options page in the browser tab."
+  },
+  "optionsPageHeader": {
+    "message": "Cupsie Printer Provider Configuration",
+    "description": "Main header on the options page."
+  },
+  "managedPoliciesNote": {
+    "message": "Enterprise managed policies are force-added alongside your custom configuration.",
+    "description": "Explanatory note about enterprise settings."
+  },
+  "managedCupsLabel": {
+    "message": "Enterprise Managed CUPS Servers",
+    "description": "Label for enterprise managed CUPS servers textarea."
+  },
+  "managedCupsPlaceholder": {
+    "message": "(Managed CUPS servers)",
+    "description": "Placeholder for enterprise managed CUPS servers textarea."
+  },
+  "userCupsLabel": {
+    "message": "CUPS Servers",
+    "description": "Label for user custom CUPS servers."
+  },
+  "userCupsNote": {
+    "message": "Enter one IP or URL per line (e.g., http://192.168.1.10:631). The extension will automatically fetch all queues from these servers.",
+    "description": "Instructions for custom CUPS servers."
+  },
+  "managedIppLabel": {
+    "message": "Enterprise Managed Standalone IPP Printers",
+    "description": "Label for enterprise managed IPP printers textarea."
+  },
+  "managedIppPlaceholder": {
+    "message": "(Managed standalone IPP printers)",
+    "description": "Placeholder for enterprise managed IPP printers."
+  },
+  "userIppLabel": {
+    "message": "Standalone IPP Printers",
+    "description": "Label for user custom IPP printers."
+  },
+  "userIppNote": {
+    "message": "Enter direct HTTP/HTTPS endpoint URLs and optional display names for your standalone printers (the extension will automatically convert ipp:// schemas upon saving).",
+    "description": "Instructions for custom IPP printers."
+  },
+  "syncIntervalLabel": {
+    "message": "Background Sync Interval (minutes)",
+    "description": "Label for sync interval selection."
+  },
+  "managedByPolicyBadge": {
+    "message": "(Managed by Policy)",
+    "description": "Badge shown when a field value is locked by enterprise policy."
+  },
+  "syncIntervalNote": {
+    "message": "How often the extension checks the network for new printers. Minimum 1 minute.",
+    "description": "Instruction note for background sync interval."
+  },
+  "lastSyncLabel": {
+    "message": "Last Sync:",
+    "description": "Label showing the timestamp of the last printer sync."
+  },
+  "never": {
+    "message": "Never",
+    "description": "Default status when last sync time is missing."
+  },
+  "viewLogsLink": {
+    "message": "View Troubleshooting Logs →",
+    "description": "Link to the troubleshooting logs page."
+  },
+  "syncResultsHeader": {
+    "message": "Sync Results",
+    "description": "Section header for server and printer connection status."
+  },
+  "saveSettingsButton": {
+    "message": "Save Settings",
+    "description": "Submit button text."
+  },
+  "savingSettings": {
+    "message": "Saving settings and syncing printers...",
+    "description": "Status text while saving."
+  },
+  "syncProgress": {
+    "message": "Saving settings and syncing printers ($1/$2)...",
+    "description": "Progress text while saving and syncing.",
+    "placeholders": {
+      "COMPLETED": {
+        "content": "$1",
+        "example": "1"
+      },
+      "TOTAL": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "syncSuccess": {
+    "message": "Settings saved and printers synced!",
+    "description": "Status text on successful save & sync."
+  },
+  "syncFailed": {
+    "message": "Settings saved, but printer sync failed: $ERROR$",
+    "description": "Status text when sync fails.",
+    "placeholders": {
+      "ERROR": {
+        "content": "$1",
+        "example": "Network error"
+      }
+    }
+  },
+  "noPrintersConfigured": {
+    "message": "No printers or servers configured.",
+    "description": "Shown in the sync status list when configuration is empty."
+  },
+  "sync_error_non_ipp": {
+    "message": "Non-IPP response (proxy/firewall block?)",
+    "description": "Error reason when server returns wrong Content-Type."
+  },
+  "sync_success_queues": {
+    "message": "Found $COUNT$ queue(s).",
+    "description": "Success message for CUPS server sync.",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "sync_error_http": {
+    "message": "HTTP Error: $STATUS$",
+    "description": "Error reason with status code.",
+    "placeholders": {
+      "STATUS": {
+        "content": "$1",
+        "example": "500"
+      }
+    }
+  },
+  "sync_error_network": {
+    "message": "Network error: $MESSAGE$",
+    "description": "Network exception message.",
+    "placeholders": {
+      "MESSAGE": {
+        "content": "$1",
+        "example": "Failed to fetch"
+      }
+    }
+  },
+  "sync_skipped_unauthorized": {
+    "message": "Skipped (unauthorized)",
+    "description": "Status when the current user is not in the allowed user list."
+  },
+  "sync_success_discovered": {
+    "message": "Discovered: \"$NAME$\"",
+    "description": "Success message for standalone printer sync.",
+    "placeholders": {
+      "NAME": {
+        "content": "$1",
+        "example": "Office Printer"
+      }
+    }
+  },
+  "logsPageTitle": {
+    "message": "Troubleshooting Logs - Printer Provider",
+    "description": "Logs page tab title."
+  },
+  "logsPageHeader": {
+    "message": "Troubleshooting Logs",
+    "description": "Main header on the logs page."
+  },
+  "logsSubtitle": {
+    "message": "Last 24 log entries captured from background operations",
+    "description": "Subtitle explaining logs duration."
+  },
+  "refreshButton": {
+    "message": "Refresh",
+    "description": "Label for refresh logs button."
+  },
+  "downloadLogsButton": {
+    "message": "Download Log",
+    "description": "Label for download logs button."
+  },
+  "clearLogsButton": {
+    "message": "Clear Logs",
+    "description": "Label for clear logs button."
+  },
+  "timestampHeader": {
+    "message": "TIMESTAMP",
+    "description": "Logs table column header."
+  },
+  "levelHeader": {
+    "message": "LEVEL",
+    "description": "Logs table column header."
+  },
+  "messageHeader": {
+    "message": "MESSAGE",
+    "description": "Logs table column header."
+  },
+  "backToSettingsLink": {
+    "message": "← Back to Settings",
+    "description": "Button-link leading back to options.html."
+  },
+  "noLogsFound": {
+    "message": "No troubleshooting logs found. Logs will populate when background actions occur.",
+    "description": "Placeholder text when there are no logs to display."
+  },
+  "confirmClearLogs": {
+    "message": "Are you sure you want to clear all troubleshooting logs?",
+    "description": "Confirm dialog message before wiping logs."
+  },
+  "downloadHeaderTitle": {
+    "message": "CUPSIE EXTENSION TROUBLESHOOTING LOG",
+    "description": "Header title inside the downloaded text log."
+  },
+  "printErrorPageTitle": {
+    "message": "Print Error",
+    "description": "Tab title for error.html."
+  },
+  "printErrorHeader": {
+    "message": "Print Error",
+    "description": "Header inside the error popup."
+  },
+  "dismiss": {
+    "message": "Dismiss",
+    "description": "Close button text in the error card."
+  },
+  "unknownErrorOccurred": {
+    "message": "An unknown error occurred.",
+    "description": "Fallback error message."
+  },
+  "accessDenied": {
+    "message": "Access Denied",
+    "description": "Title of authorization block warning."
+  },
+  "accessDeniedMessage": {
+    "message": "You do not have permission to print/access '$TARGET$'.",
+    "description": "Details for access denial.",
+    "placeholders": {
+      "TARGET": {
+        "content": "$1",
+        "example": "Marketing-Printer"
+      }
+    }
+  },
+  "printJobFailed": {
+    "message": "Print Job Failed",
+    "description": "Notification title when print dispatch fails."
+  },
+  "printJobFailedMessage": {
+    "message": "Job '$TITLE$' failed: $REASON$",
+    "description": "Details for print job failure.",
+    "placeholders": {
+      "TITLE": {
+        "content": "$1",
+        "example": "Tax_Report.pdf"
+      },
+      "REASON": {
+        "content": "$2",
+        "example": "Access Denied"
+      }
+    }
+  },
+  "ipp_error_0401": {
+    "message": "Not authorized (Authentication required).",
+    "description": "IPP status code 0x0401 translation."
+  },
+  "ipp_error_0403": {
+    "message": "Access denied: You do not have permission to print to this printer.",
+    "description": "IPP status code 0x0403 translation."
+  },
+  "ipp_error_0407": {
+    "message": "Printer queue not found on the print server.",
+    "description": "IPP status code 0x0407 translation."
+  },
+  "ipp_error_0408": {
+    "message": "Printer queue is gone or deleted.",
+    "description": "IPP status code 0x0408 translation."
+  },
+  "ipp_error_040b": {
+    "message": "Conflicting attributes specified in the print ticket.",
+    "description": "IPP status code 0x040b translation."
+  },
+  "ipp_error_0506": {
+    "message": "The printer is not currently accepting print jobs.",
+    "description": "IPP status code 0x0506 translation."
+  },
+  "ipp_error_unknown": {
+    "message": "Printer returned status code $CODE$.",
+    "description": "Generic IPP status code translation.",
+    "placeholders": {
+      "CODE": {
+        "content": "$1",
+        "example": "0x0400"
+      }
+    }
+  },
+  "errProxyFirewall": {
+    "message": "Connection blocked by proxy or firewall.",
+    "description": "HTTP post failure detail."
+  },
+  "errProxyGateway": {
+    "message": "Connection rejected by network proxy/gateway.",
+    "description": "HTTP post failure detail."
+  },
+  "errHttpUnauthorized": {
+    "message": "Access denied / Unauthorized (HTTP 401/403).",
+    "description": "HTTP post failure detail."
+  },
+  "errHttpProxyAuth": {
+    "message": "Proxy authentication required (HTTP 407).",
+    "description": "HTTP post failure detail."
+  },
+  "errHttpBadGateway": {
+    "message": "Proxy error or bad gateway (HTTP 502/504).",
+    "description": "HTTP post failure detail."
+  },
+  "errConnectionFailed": {
+    "message": "Connection failed.",
+    "description": "Fallback print exception message."
+  },
+  "use_printer_default": {
+    "message": "Use Printer Default",
+    "description": "Option value prepended to Advanced Settings Select elements."
+  },
+  "input_tray": {
+    "message": "Input Tray",
+    "description": "Advanced print capability label."
+  },
+  "output_tray": {
+    "message": "Output Tray",
+    "description": "Advanced print capability label."
+  },
+  "paper_type": {
+    "message": "Paper Type",
+    "description": "Advanced print capability label."
+  },
+  "print_scaling": {
+    "message": "Print Scaling",
+    "description": "Advanced print capability label."
+  },
+  "banner_page": {
+    "message": "Banner Page",
+    "description": "Advanced print capability label."
+  },
+  "page_delivery": {
+    "message": "Page Delivery",
+    "description": "Advanced print capability label."
+  },
+  "orientation": {
+    "message": "Orientation",
+    "description": "Advanced print capability label."
+  },
+  "collation": {
+    "message": "Collation",
+    "description": "Advanced print capability label."
+  },
+  "hold_until": {
+    "message": "Hold Until",
+    "description": "Advanced print capability label."
+  },
+  "finishing_options": {
+    "message": "Finishing Options",
+    "description": "Advanced print capability label."
+  },
+  "orient_portrait": {
+    "message": "Portrait",
+    "description": "Orientation option value."
+  },
+  "orient_landscape": {
+    "message": "Landscape",
+    "description": "Orientation option value."
+  },
+  "orient_rev_landscape": {
+    "message": "Reverse Landscape",
+    "description": "Orientation option value."
+  },
+  "orient_rev_portrait": {
+    "message": "Reverse Portrait",
+    "description": "Orientation option value."
+  },
+  "orient_none": {
+    "message": "None",
+    "description": "Orientation option value for none."
+  },
+  "orient_unknown": {
+    "message": "Orientation #$VAL$",
+    "description": "Fallback orientation option.",
+    "placeholders": {
+      "VAL": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "col_uncollated": {
+    "message": "Uncollated",
+    "description": "Collation option value."
+  },
+  "col_collated": {
+    "message": "Collated",
+    "description": "Collation option value."
+  },
+  "finish_none": {
+    "message": "None",
+    "description": "Finishing option value."
+  },
+  "finish_staple": {
+    "message": "Staple",
+    "description": "Finishing option value."
+  },
+  "finish_punch": {
+    "message": "Punch",
+    "description": "Finishing option value."
+  },
+  "finish_cover": {
+    "message": "Cover",
+    "description": "Finishing option value."
+  },
+  "finish_bind": {
+    "message": "Bind",
+    "description": "Finishing option value."
+  },
+  "finish_saddle_stitch": {
+    "message": "Saddle Stitch",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch": {
+    "message": "Edge Stitch",
+    "description": "Finishing option value."
+  },
+  "finish_staple_top_left": {
+    "message": "Staple Top Left",
+    "description": "Finishing option value."
+  },
+  "finish_staple_bottom_left": {
+    "message": "Staple Bottom Left",
+    "description": "Finishing option value."
+  },
+  "finish_staple_top_right": {
+    "message": "Staple Top Right",
+    "description": "Finishing option value."
+  },
+  "finish_staple_bottom_right": {
+    "message": "Staple Bottom Right",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_left": {
+    "message": "Edge Stitch Left",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_top": {
+    "message": "Edge Stitch Top",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_right": {
+    "message": "Edge Stitch Right",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_bottom": {
+    "message": "Edge Stitch Bottom",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_left": {
+    "message": "Staple Dual Left",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_top": {
+    "message": "Staple Dual Top",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_right": {
+    "message": "Staple Dual Right",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_bottom": {
+    "message": "Staple Dual Bottom",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_left": {
+    "message": "Staple Triple Left",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_top": {
+    "message": "Staple Triple Top",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_right": {
+    "message": "Staple Triple Right",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_bottom": {
+    "message": "Staple Triple Bottom",
+    "description": "Finishing option value."
+  },
+  "finish_bind_left": {
+    "message": "Bind Left",
+    "description": "Finishing option value."
+  },
+  "finish_bind_top": {
+    "message": "Bind Top",
+    "description": "Finishing option value."
+  },
+  "finish_bind_right": {
+    "message": "Bind Right",
+    "description": "Finishing option value."
+  },
+  "finish_bind_bottom": {
+    "message": "Bind Bottom",
+    "description": "Finishing option value."
+  },
+  "finish_trim": {
+    "message": "Trim",
+    "description": "Finishing option value."
+  },
+  "finish_punch_dual_left": {
+    "message": "Punch Dual Left",
+    "description": "Finishing option value."
+  },
+  "finish_punch_dual_top": {
+    "message": "Punch Dual Top",
+    "description": "Finishing option value."
+  },
+  "finish_punch_dual_right": {
+    "message": "Punch Dual Right",
+    "description": "Finishing option value."
+  },
+  "finish_punch_triple_left": {
+    "message": "Punch Triple Left",
+    "description": "Finishing option value."
+  },
+  "finish_punch_triple_top": {
+    "message": "Punch Triple Top",
+    "description": "Finishing option value."
+  },
+  "finish_punch_triple_right": {
+    "message": "Punch Triple Right",
+    "description": "Finishing option value."
+  },
+  "finish_punch_quad_left": {
+    "message": "Punch Quad Left",
+    "description": "Finishing option value."
+  },
+  "finish_punch_quad_top": {
+    "message": "Punch Quad Top",
+    "description": "Finishing option value."
+  },
+  "finish_punch_quad_right": {
+    "message": "Punch Quad Right",
+    "description": "Finishing option value."
+  },
+  "finish_fold_accordion": {
+    "message": "Fold Accordion",
+    "description": "Finishing option value."
+  },
+  "finish_fold_double_gate": {
+    "message": "Fold Double Gate",
+    "description": "Finishing option value."
+  },
+  "finish_fold_gate": {
+    "message": "Fold Gate",
+    "description": "Finishing option value."
+  },
+  "finish_fold_half": {
+    "message": "Fold Half",
+    "description": "Finishing option value."
+  },
+  "finish_fold_half_z": {
+    "message": "Fold Half Z",
+    "description": "Finishing option value."
+  },
+  "finish_fold_left_gate": {
+    "message": "Fold Left Gate",
+    "description": "Finishing option value."
+  },
+  "finish_fold_letter": {
+    "message": "Fold Letter",
+    "description": "Finishing option value."
+  },
+  "finish_fold_poster": {
+    "message": "Fold Poster",
+    "description": "Finishing option value."
+  },
+  "finish_fold_right_gate": {
+    "message": "Fold Right Gate",
+    "description": "Finishing option value."
+  },
+  "finish_fold_z": {
+    "message": "Fold Z",
+    "description": "Finishing option value."
+  },
+  "finish_unknown": {
+    "message": "Finishing #$VAL$",
+    "description": "Fallback finishing option.",
+    "placeholders": {
+      "VAL": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "permissionsRequired": {
+    "message": "Connection permissions are required to sync these printers.",
+    "description": "Error displayed when user denies permission to query the printer host."
+  }
+}

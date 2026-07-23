@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "cupsServers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Enterprise-managed CUPS Servers to fetch printer queues from."
+    },
+    "ippPrinters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "description": "Enterprise-managed standalone IPP printer URLs with optional custom names."
+    },
+    "syncInterval": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1440,
+      "description": "Background sync interval in minutes."
+    }
+  }
+}

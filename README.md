@@ -88,7 +88,7 @@ For Linux managed workstations, save a policy file to `/etc/opt/chrome/policies/
 ```json
 {
   "ExtensionSettings": {
-    "<EXTENSION_ID>": {
+    "dekecaodhfljnecmmkenlmjfcbmdokno": {
       "installation_mode": "force_installed",
       "update_url": "https://clients2.google.com/service/update2/crx",
       "runtime_allowed_hosts": [
@@ -98,7 +98,7 @@ For Linux managed workstations, save a policy file to `/etc/opt/chrome/policies/
   },
   "3rdparty": {
     "extensions": {
-      "<EXTENSION_ID>": {
+      "dekecaodhfljnecmmkenlmjfcbmdokno": {
         "cupsServers": [
           "http://cups-server.internal:631"
         ],

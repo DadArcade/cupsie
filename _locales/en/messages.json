@@ -1,22 +1,22 @@
 {
   "extName": {
-    "message": "Cupsie Printer Provider",
+    "message": "Cupsie",
     "description": "The name of the extension."
   },
   "extDesc": {
-    "message": "Exposes local CUPS queues and IPP printers into the native Chrome Print Dialog.",
+    "message": "Adds CUPS queues and IPP printers to the native Chrome Print Dialog.",
     "description": "Description of the extension."
   },
   "optionsPageTitle": {
-    "message": "Printer Provider Options",
+    "message": "Cupsie Options",
     "description": "Title of the options page in the browser tab."
   },
   "optionsPageHeader": {
-    "message": "Cupsie Printer Provider Configuration",
+    "message": "Cupsie Configuration",
     "description": "Main header on the options page."
   },
   "managedPoliciesNote": {
-    "message": "Enterprise managed policies are force-added alongside your custom configuration.",
+    "message": "Enterprise policies are added automatically. You can add more printers below.",
     "description": "Explanatory note about enterprise settings."
   },
   "managedCupsLabel": {

@@ -49,7 +49,12 @@ Enterprise IT administrators can deploy and enforce printer configurations acros
 | `ippPrinters` | Array of Objects | Direct IPP printers with `url` (string) and optional `name` (string). |
 | `syncInterval` | Integer | Background sync interval in minutes (1–1440). |
 
-### Example Policy JSON
+### Deploying via Google Admin Console
+
+1. Open the **Google Admin Console**.
+2. Go to **Devices > Chrome > Apps & extensions > Users & browsers**.
+3. Select **Cupsie**.
+4. Under **Policy for extensions**, paste your JSON policy:
 
 ```json
 {
@@ -62,7 +67,7 @@ Enterprise IT administrators can deploy and enforce printer configurations acros
     "Value": [
       {
         "url": "http://10.0.1.54:631/ipp/print",
-        "name": "HQ 1sr Floor Copier"
+        "name": "HQ 1st Floor Copier"
       },
       {
         "url": "http://10.0.1.55:631/ipp/print",
@@ -76,12 +81,43 @@ Enterprise IT administrators can deploy and enforce printer configurations acros
 }
 ```
 
-### How to Deploy Policy
+### Deploying via Linux Managed Policy (`/etc/opt/chrome/policies/managed/`)
 
-1. Open the **Google Admin Console**.
-2. Go to **Devices > Chrome > Apps & extensions > Users & browsers**.
-3. Select **Cupsie Printer Provider**.
-4. Under **Policy for extensions**, paste your JSON policy.
+For Linux managed workstations, save a policy file to `/etc/opt/chrome/policies/managed/cupsie_policy.json` (replace `<EXTENSION_ID>` with your extension's ID). Force-installing the extension automatically grants required host access permissions without user prompts:
+
+```json
+{
+  "ExtensionSettings": {
+    "<EXTENSION_ID>": {
+      "installation_mode": "force_installed",
+      "update_url": "https://clients2.google.com/service/update2/crx",
+      "runtime_allowed_hosts": [
+        "<all_urls>"
+      ]
+    }
+  },
+  "3rdparty": {
+    "extensions": {
+      "<EXTENSION_ID>": {
+        "cupsServers": [
+          "http://cups-server.internal:631"
+        ],
+        "ippPrinters": [
+          {
+            "url": "http://10.0.1.54:631/ipp/print",
+            "name": "HQ 1st Floor Copier"
+          },
+          {
+            "url": "http://10.0.1.55:631/ipp/print",
+            "name": "HQ 2nd Floor Copier"
+          }
+        ],
+        "syncInterval": 1440
+      }
+    }
+  }
+}
+```
 
 ---
 

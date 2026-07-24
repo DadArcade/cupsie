@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title data-i18n="optionsPageTitle">Printer Provider Options</title>
   <link rel="stylesheet" href="fonts/fonts.css">
@@ -73,6 +74,7 @@
       resize: vertical;
       transition: all 0.2s;
     }
+
     textarea:focus {
       outline: none;
       border: 2px solid var(--primary);
@@ -95,11 +97,13 @@
       transition: all 0.2s;
       width: 100px;
     }
+
     input[type="number"]:focus {
       outline: none;
       border: 2px solid var(--primary);
       padding: 9px;
     }
+
     input[type="number"]:disabled {
       background-color: var(--bg);
       color: var(--text-muted);
@@ -119,11 +123,13 @@
       transition: all 0.2s;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
     }
+
     button:hover {
       background-color: var(--primary-hover);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.15);
       transform: translateY(-1px);
     }
+
     button:active {
       transform: translateY(1px);
     }
@@ -150,6 +156,7 @@
       transition: color 0.15s ease;
       text-decoration: none;
     }
+
     a:hover {
       color: var(--primary-hover);
       text-decoration: underline;
@@ -176,6 +183,7 @@
       margin-bottom: 8px;
       align-items: center;
     }
+
     .printer-row input[type="text"] {
       background-color: #fdfcff;
       color: var(--text);
@@ -186,17 +194,21 @@
       transition: all 0.2s;
       box-sizing: border-box;
     }
+
     .printer-row input[type="text"]:focus {
       outline: none;
       border: 2px solid var(--primary);
       padding: 9px 11px;
     }
+
     .printer-row .printer-url {
       flex: 2;
     }
+
     .printer-row .printer-name {
       flex: 1;
     }
+
     .printer-row .remove-btn {
       background-color: transparent;
       color: var(--error);
@@ -213,6 +225,7 @@
       width: auto;
       height: 38px;
     }
+
     .printer-row .remove-btn:hover {
       background-color: var(--error-container);
       color: var(--on-error-container);
@@ -220,13 +233,14 @@
       transform: none;
       box-shadow: none;
     }
-    
+
     .printer-row-managed {
       display: flex;
       gap: 12px;
       margin-bottom: 6px;
       align-items: center;
     }
+
     .printer-row-managed input[type="text"] {
       background-color: var(--bg);
       color: var(--text-muted);
@@ -236,17 +250,20 @@
       font-size: 13.5px;
       box-sizing: border-box;
     }
+
     .printer-row-managed .managed-url {
       flex: 2;
     }
+
     .printer-row-managed .managed-name {
       flex: 1;
     }
   </style>
 </head>
+
 <body>
   <h1 data-i18n="optionsPageHeader">Printer Provider Configuration</h1>
-  
+
   <p class="note" style="margin-bottom: 20px;" data-i18n="managedPoliciesNote">
     Enterprise managed policies are force-added alongside your custom configuration.
   </p>
@@ -254,11 +271,14 @@
   <div class="section">
     <div id="managedCupsSection" style="margin-bottom: 15px; display: none;">
       <label style="color: #5f6368;" data-i18n="managedCupsLabel">Enterprise Managed CUPS Servers</label>
-      <textarea id="managedCupsServers" readonly style="background-color: #f1f3f4; color: #5f6368; height: 60px; border: 1px dashed #ccc;" data-i18n-placeholder="managedCupsPlaceholder" placeholder="(Managed CUPS servers)"></textarea>
+      <textarea id="managedCupsServers" readonly
+        style="background-color: #f1f3f4; color: #5f6368; height: 60px; border: 1px dashed #ccc;"
+        data-i18n-placeholder="managedCupsPlaceholder" placeholder="(Managed CUPS servers)"></textarea>
     </div>
-    
+
     <label for="cupsServers" data-i18n="userCupsLabel">User CUPS Servers</label>
-    <p class="note" data-i18n="userCupsNote">Enter one IP or URL per line (e.g., http://192.168.1.10:631). The extension will automatically fetch all queues from these servers.</p>
+    <p class="note" data-i18n="userCupsNote">Enter one IP or URL per line (e.g., http://192.168.1.10:631). The extension
+      will automatically fetch all queues from these servers.</p>
     <textarea id="cupsServers" placeholder="http://192.168.1.100:631&#10;192.168.2.50"></textarea>
   </div>
 
@@ -267,26 +287,38 @@
       <label style="color: #5f6368;" data-i18n="managedIppLabel">Enterprise Managed Standalone IPP Printers</label>
       <div id="managedIppPrintersContainer" style="margin-bottom: 10px;"></div>
     </div>
-    
+
     <label for="ippPrintersContainer" data-i18n="userIppLabel">User Standalone IPP Printers</label>
-    <p class="note" data-i18n="userIppNote">Enter direct HTTP/HTTPS endpoint URLs and optional display names for your standalone printers (the extension will automatically convert `ipp://` schemas upon saving).</p>
+    <p class="note" data-i18n="userIppNote">Enter direct HTTP/HTTPS endpoint URLs and optional display names for your
+      standalone printers (the extension will automatically convert `ipp://` schemas upon saving).</p>
     <div id="ippPrintersContainer" style="margin-bottom: 12px;"></div>
-    <button type="button" id="addIppPrinterBtn" style="background-color: var(--primary-container); color: var(--on-primary-container); padding: 8px 16px; font-size: 13px; border-radius: 8px; box-shadow: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; border: none; cursor: pointer; transition: all 0.2s;">
+    <button type="button" id="addIppPrinterBtn"
+      style="background-color: var(--primary-container); color: var(--on-primary-container); padding: 8px 16px; font-size: 13px; border-radius: 8px; box-shadow: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; border: none; cursor: pointer; transition: all 0.2s;">
       <span style="font-size: 16px; font-weight: bold;">+</span> Add Printer
     </button>
   </div>
 
   <div class="section">
-    <label for="syncInterval"><span data-i18n="syncIntervalLabel">Background Sync Interval (minutes)</span> <span id="managedIntervalBadge" style="display:none; color:#137333; font-weight:bold; font-size:12px; margin-left:10px;" data-i18n="managedByPolicyBadge">(Managed by Policy)</span></label>
-    <p class="note" data-i18n="syncIntervalNote">How often the extension checks the network for new printers. Minimum 1 minute.</p>
-    <input type="number" id="syncInterval" min="1" max="1440" value="15" style="width: 100px; padding: 5px; margin-bottom: 5px; border: 1px solid #bbb; border-radius: 4px;">
-    
-    <p class="note" style="margin-top: 10px; font-weight: bold; color: #1a73e8;"><span data-i18n="lastSyncLabel">Last Sync:</span> <span id="lastSyncTime" data-i18n="never">Never</span></p>
-    <p class="note" style="margin-top: 5px;"><a href="logs.html" target="_blank" style="color: #6366f1; text-decoration: none; font-weight: 500;" data-i18n="viewLogsLink">View Troubleshooting Logs &rarr;</a></p>
-    
+    <label for="syncInterval"><span data-i18n="syncIntervalLabel">Background Sync Interval (minutes)</span> <span
+        id="managedIntervalBadge"
+        style="display:none; color:#137333; font-weight:bold; font-size:12px; margin-left:10px;"
+        data-i18n="managedByPolicyBadge">(Managed by Policy)</span></label>
+    <p class="note" data-i18n="syncIntervalNote">How often the extension checks the network for new printers. Minimum 1
+      minute.</p>
+    <input type="number" id="syncInterval" min="1" max="1440" value="1440"
+      style="width: 100px; padding: 5px; margin-bottom: 5px; border: 1px solid #bbb; border-radius: 4px;">
+
+    <p class="note" style="margin-top: 10px; font-weight: bold; color: #1a73e8;"><span data-i18n="lastSyncLabel">Last
+        Sync:</span> <span id="lastSyncTime" data-i18n="never">Never</span></p>
+    <p class="note" style="margin-top: 5px;"><a href="logs.html" target="_blank"
+        style="color: #6366f1; text-decoration: none; font-weight: 500;" data-i18n="viewLogsLink">View Troubleshooting
+        Logs &rarr;</a></p>
+
     <div style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
       <h3 style="font-size: 14px; margin-bottom: 5px;" data-i18n="syncResultsHeader">Sync Results</h3>
-      <ul id="syncLog" style="list-style-type: none; padding-left: 0; font-size: 13px; max-height: 150px; overflow-y: auto; margin: 0;"></ul>
+      <ul id="syncLog"
+        style="list-style-type: none; padding-left: 0; font-size: 13px; max-height: 150px; overflow-y: auto; margin: 0;">
+      </ul>
     </div>
   </div>
 
@@ -296,4 +328,5 @@
   <script src="i18n-helper.js"></script>
   <script src="options.js"></script>
 </body>
+
 </html>

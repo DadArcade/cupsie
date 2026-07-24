@@ -3,6 +3,9 @@ const originalLog = console.log;
 const originalWarn = console.warn;
 const originalError = console.error;
 
+let logQueue = [];
+let isWritingLogs = false;
+
 async function appendLog(level, args) {
   const message = args.map(arg => {
     if (arg instanceof Error) return arg.stack || arg.message;
@@ -12,16 +15,32 @@ async function appendLog(level, args) {
     return String(arg);
   }).join(' ');
 
+  logQueue.push({ timestamp: Date.now(), level, message });
+  processLogQueue();
+}
+
+async function processLogQueue() {
+  if (isWritingLogs || logQueue.length === 0) return;
+  isWritingLogs = true;
+
   try {
+    const batch = [...logQueue];
+    logQueue = [];
+
     const items = await chrome.storage.local.get(['logs']);
-    const logs = items.logs || [];
-    logs.push({ timestamp: Date.now(), level, message });
+    let logs = items.logs || [];
+    logs.push(...batch);
     if (logs.length > 24) {
-      logs.shift(); // Keep only last 24 logs
+      logs = logs.slice(-24); // Keep only last 24 logs
     }
     await chrome.storage.local.set({ logs });
   } catch (e) {
-    originalError.call(console, 'Failed to save log to storage:', e);
+    originalError.call(console, 'Failed to save logs to storage:', e);
+  } finally {
+    isWritingLogs = false;
+    if (logQueue.length > 0) {
+      processLogQueue();
+    }
   }
 }
 
@@ -47,7 +66,6 @@ import { retry, notifyUserError, getHostname, fetchWithTimeout } from './errorHa
 
 const BACKGROUND_SYNC_ALARM = 'SYNC_PRINTERS_ALARM';
 const DEFAULT_SYNC_INTERVAL_MINUTES = 1440;
-let cachedPrinters = []; // In-memory cache
 
 /**
  * Converts an http(s):// URL to its ipp(s):// equivalent for use
@@ -505,12 +523,11 @@ async function syncPrinters(onProgress) {
 
     // Sort alphabetically and update cache
     newPrinters.sort((a, b) => a.name.localeCompare(b.name));
-    cachedPrinters = newPrinters;
 
     const elapsed = Date.now() - startTime;
-    console.log(`Sync complete in ${elapsed}ms — ${cachedPrinters.length} total printer(s) cached:`);
-    if (cachedPrinters.length > 0) {
-      console.table(cachedPrinters.map(p => ({ Name: p.name, ID: p.id, Description: p.description })));
+    console.log(`Sync complete in ${elapsed}ms — ${newPrinters.length} total printer(s) cached:`);
+    if (newPrinters.length > 0) {
+      console.table(newPrinters.map(p => ({ Name: p.name, ID: p.id, Description: p.description })));
     }
     console.groupEnd();
 

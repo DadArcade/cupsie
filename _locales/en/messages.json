@@ -63,6 +63,10 @@
     "message": "How often the extension checks the network for new printers. Minimum 1 minute.",
     "description": "Instruction note for background sync interval."
   },
+  "syncIntervalInvalid": {
+    "message": "Background sync interval must be between 1 and 1440 minutes.",
+    "description": "Error message shown when the sync interval is out of bounds."
+  },
   "lastSyncLabel": {
     "message": "Last Sync:",
     "description": "Label showing the timestamp of the last printer sync."

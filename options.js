@@ -75,9 +75,20 @@ function saveOptions() {
     }
   });
 
-  const syncInterval = parseInt(document.getElementById('syncInterval').value, 10) || 15;
+  const syncInterval = parseInt(document.getElementById('syncInterval').value, 10);
 
   const status = document.getElementById('status');
+  if (isNaN(syncInterval) || syncInterval < 1 || syncInterval > 1440) {
+    status.textContent = chrome.i18n.getMessage('syncIntervalInvalid');
+    status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+    status.style.color = '#f87171';
+    status.style.display = 'block';
+    setTimeout(() => {
+      status.style.display = 'none';
+    }, 4000);
+    return;
+  }
+
   status.textContent = chrome.i18n.getMessage('savingSettings');
   status.style.backgroundColor = 'rgba(99, 102, 241, 0.15)';
   status.style.color = '#a5b4fc';

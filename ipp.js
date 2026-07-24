@@ -315,7 +315,12 @@ export function parseIppResponse(arrayBuffer) {
   if (!arrayBuffer || !(arrayBuffer instanceof ArrayBuffer || ArrayBuffer.isView(arrayBuffer))) {
     throw new Error('Invalid input buffer passed to IPP parser');
   }
-  const view = arrayBuffer instanceof ArrayBuffer ? new DataView(arrayBuffer) : new DataView(arrayBuffer.buffer, arrayBuffer.byteOffset, arrayBuffer.byteLength);
+  
+  const rawBuffer = arrayBuffer.buffer || arrayBuffer;
+  const baseOffset = arrayBuffer.byteOffset || 0;
+  const byteLength = arrayBuffer.byteLength;
+
+  const view = new DataView(rawBuffer, baseOffset, byteLength);
   let offset = 0;
 
   if (view.byteLength < 8) {
@@ -361,7 +366,7 @@ export function parseIppResponse(arrayBuffer) {
     let name = '';
     if (nameLen > 0) {
       if (offset + nameLen > view.byteLength) break;
-      name = decoder.decode(new Uint8Array(arrayBuffer, offset, nameLen));
+      name = decoder.decode(new Uint8Array(rawBuffer, baseOffset + offset, nameLen));
       offset += nameLen;
     }
 
@@ -370,7 +375,7 @@ export function parseIppResponse(arrayBuffer) {
     const valLen = view.getInt16(offset); offset += 2;
 
     if (valLen < 0 || offset + valLen > view.byteLength) break;
-    const valBytes = new Uint8Array(arrayBuffer, offset, valLen);
+    const valBytes = new Uint8Array(rawBuffer, baseOffset + offset, valLen);
     const valOffset = offset;
     offset += valLen;
 
@@ -380,20 +385,20 @@ export function parseIppResponse(arrayBuffer) {
       // All text / URI / keyword / charset / language types
       value = decoder.decode(valBytes);
     } else if (tag === TAGS.integer || tag === TAGS.enum) {
-      value = (valLen === 4) ? new DataView(arrayBuffer, valOffset, 4).getInt32(0) : valBytes;
+      value = (valLen === 4) ? new DataView(rawBuffer, baseOffset + valOffset, 4).getInt32(0) : valBytes;
     } else if (tag === TAGS.boolean) {
       value = (valLen === 1) ? valBytes[0] === 1 : valBytes;
     } else if (tag === TAGS.resolution) {
       // 4 bytes cross-feed DPI + 4 bytes feed DPI + 1 byte unit
       if (valLen === 9) {
-        const rv = new DataView(arrayBuffer, valOffset, 9);
+        const rv = new DataView(rawBuffer, baseOffset + valOffset, 9);
         value = `${rv.getInt32(0)}x${rv.getInt32(4)}dpi`;
       } else {
         value = valBytes;
       }
     } else if (tag === TAGS.rangeOfInteger) {
       if (valLen === 8) {
-        const rv = new DataView(arrayBuffer, valOffset, 8);
+        const rv = new DataView(rawBuffer, baseOffset + valOffset, 8);
         value = [rv.getInt32(0), rv.getInt32(4)]; // [min, max]
       } else {
         value = valBytes;

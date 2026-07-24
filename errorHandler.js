@@ -18,6 +18,33 @@ export function getHostname(url) {
   }
 }
 
+/**
+ * Fetches a resource with a specified timeout in milliseconds.
+ */
+export async function fetchWithTimeout(resource, options = {}, timeoutMs = 8000) {
+  const { signal, ...otherOptions } = options;
+  const controller = new AbortController();
+  
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort();
+    } else {
+      signal.addEventListener('abort', () => controller.abort());
+    }
+  }
+
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(resource, {
+      ...otherOptions,
+      signal: controller.signal
+    });
+    return response;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 export async function retry(operation, args = [], { retries = 3, delay = 1000, url = '' } = {}) {
   if (typeof operation !== 'function') {
     throw new TypeError('operation must be a function');

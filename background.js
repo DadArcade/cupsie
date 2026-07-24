@@ -42,7 +42,7 @@ console.error = function (...args) {
 
 import { buildIppRequest, parseIppResponse, IPP_OPS } from './ipp.js';
 import { buildCDD } from './cdd.js';
-import { retry, notifyUserError, getHostname } from './errorHandler.js';
+import { retry, notifyUserError, getHostname, fetchWithTimeout } from './errorHandler.js';
 
 
 const BACKGROUND_SYNC_ALARM = 'SYNC_PRINTERS_ALARM';
@@ -311,8 +311,7 @@ async function syncPrinters(onProgress) {
 
   reportProgress();
 
-  // 1. Discover Printers on CUPS Servers
-  for (const serverUrl of cupsServers) {
+  const serverTask = async (serverUrl) => {
     console.group(`[CUPS] → ${serverUrl}`);
     try {
       const endpoint = serverUrl.endsWith('/') ? serverUrl : serverUrl + '/';
@@ -320,11 +319,11 @@ async function syncPrinters(onProgress) {
       const requestBuffer = buildIppRequest(IPP_OPS.CUPS_Get_Printers, 1, toIppScheme(endpoint));
 
       const performFetch = async () => {
-        const res = await fetch(endpoint, {
+        const res = await fetchWithTimeout(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/ipp' },
           body: new Blob([requestBuffer], { type: 'application/ipp' })
-        });
+        }, 8000);
         if (!res.ok && res.status >= 500) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -340,7 +339,7 @@ async function syncPrinters(onProgress) {
         if (contentType && !contentType.includes('application/ipp')) {
           console.warn(`  ✖ Non-IPP response from CUPS server: ${contentType}`);
           syncResults[serverUrl] = { status: 'error', message: chrome.i18n.getMessage('sync_error_non_ipp') };
-          continue;
+          return;
         }
         const responseBuffer = await response.arrayBuffer();
         const parsed = parseIppResponse(responseBuffer);
@@ -386,14 +385,14 @@ async function syncPrinters(onProgress) {
     } catch (e) {
       console.error(`  ✖ Network error: ${e.message}`);
       syncResults[serverUrl] = { status: 'error', message: e.message || chrome.i18n.getMessage('errConnectionFailed') };
+    } finally {
+      console.groupEnd();
+      completedTasks++;
+      reportProgress();
     }
-    console.groupEnd();
-    completedTasks++;
-    reportProgress();
-  }
+  };
 
-  // 2. Discover standalone IPP printers
-  for (const printer of ippPrinters) {
+  const printerTask = async (printer) => {
     console.group(`[IPP]  → ${printer.url}`);
     try {
       const printerHost = getHostname(printer.url);
@@ -401,12 +400,13 @@ async function syncPrinters(onProgress) {
       console.log(`  Sending Get-Printer-Attributes to ${targetName} …`);
       let currentVersion = 0x0200;
       let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 2, toIppScheme(printer.url), false, 'Print Job', null, 'Chrome User', currentVersion);
+      
       const performFetch = async (reqBuf) => {
-        const res = await fetch(printer.url, {
+        const res = await fetchWithTimeout(printer.url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/ipp' },
           body: new Blob([reqBuf], { type: 'application/ipp' })
-        });
+        }, 8000);
         if (!res.ok && res.status >= 500) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -422,7 +422,7 @@ async function syncPrinters(onProgress) {
         if (contentType && !contentType.includes('application/ipp')) {
           console.warn(`  ✖ Non-IPP response from standalone printer: ${contentType}`);
           syncResults[printer.url] = { status: 'error', message: chrome.i18n.getMessage('sync_error_non_ipp') };
-          continue;
+          return;
         }
         let responseBuffer = await response.arrayBuffer();
         let parsed = parseIppResponse(responseBuffer);
@@ -441,7 +441,7 @@ async function syncPrinters(onProgress) {
           } else {
             console.warn(`  ✖ HTTP ${response.status} on IPP 1.1 retry.`);
             syncResults[printer.url] = { status: 'error', message: chrome.i18n.getMessage('sync_error_http', [response.status]) };
-            continue;
+            return;
           }
         }
 
@@ -453,7 +453,7 @@ async function syncPrinters(onProgress) {
         if (!isUserAllowed(username, allowedList, deniedList)) {
           console.log(`  Skipping blocked standalone printer "${name}" for user "${username}"`);
           syncResults[printer.url] = { status: 'success', message: chrome.i18n.getMessage('sync_skipped_unauthorized') };
-          continue;
+          return;
         }
 
         const info = pg.attributes['printer-info']?.[0] || '';
@@ -471,11 +471,22 @@ async function syncPrinters(onProgress) {
     } catch (e) {
       console.error(`  ✖ Network error: ${e.message}`);
       syncResults[printer.url] = { status: 'error', message: e.message || chrome.i18n.getMessage('errConnectionFailed') };
+    } finally {
+      console.groupEnd();
+      completedTasks++;
+      reportProgress();
     }
-    console.groupEnd();
-    completedTasks++;
-    reportProgress();
+  };
+
+  const tasks = [];
+  for (const serverUrl of cupsServers) {
+    tasks.push(serverTask(serverUrl));
   }
+  for (const printer of ippPrinters) {
+    tasks.push(printerTask(printer));
+  }
+
+  await Promise.all(tasks);
 
   // Sort alphabetically and update cache
   newPrinters.sort((a, b) => a.name.localeCompare(b.name));
@@ -564,11 +575,11 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
       let currentVersion = 0x0200;
       let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 3, toIppScheme(printerId), false, 'Print Job', null, 'Chrome User', currentVersion);
       const performFetch = async (reqBuf) => {
-        const res = await fetch(toHttpScheme(printerId), {
+        const res = await fetchWithTimeout(toHttpScheme(printerId), {
           method: 'POST',
           headers: { 'Content-Type': 'application/ipp' },
           body: new Blob([reqBuf], { type: 'application/ipp' })
-        });
+        }, 8000);
         if (!res.ok && res.status >= 500) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -748,11 +759,11 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
 
     // Submit the print job to the endpoint
     const submitPrintJob = async () => {
-      const res = await fetch(toHttpScheme(printJob.printerId), {
+      const res = await fetchWithTimeout(toHttpScheme(printJob.printerId), {
         method: 'POST',
         headers: { 'Content-Type': 'application/ipp' },
         body: new Blob([payload], { type: 'application/ipp' })
-      });
+      }, 30000);
       if (!res.ok && res.status >= 500) {
         throw new Error(`HTTP ${res.status}`);
       }

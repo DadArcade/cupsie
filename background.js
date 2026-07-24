@@ -74,8 +74,8 @@ const DEFAULT_SYNC_INTERVAL_MINUTES = 1440;
  * The fetch() transport URL is unaffected and stays as http://.
  */
 function toIppScheme(url) {
-  if (url.startsWith('https://')) return url.replace('https://', 'ipps://');
-  if (url.startsWith('http://')) return url.replace('http://', 'ipp://');
+  if (/^https:\/\//i.test(url)) return url.replace(/^https:\/\//i, 'ipps://');
+  if (/^http:\/\//i.test(url)) return url.replace(/^http:\/\//i, 'ipp://');
   return url;
 }
 
@@ -84,8 +84,8 @@ function toIppScheme(url) {
  * Chrome's fetch API strictly rejects the ipp:// scheme.
  */
 function toHttpScheme(url) {
-  if (url.startsWith('ipps://')) return url.replace('ipps://', 'https://');
-  if (url.startsWith('ipp://')) return url.replace('ipp://', 'http://');
+  if (/^ipps:\/\//i.test(url)) return url.replace(/^ipps:\/\//i, 'https://');
+  if (/^ipp:\/\//i.test(url)) return url.replace(/^ipp:\/\//i, 'http://');
   return url;
 }
 
@@ -355,7 +355,7 @@ async function syncPrinters(onProgress) {
         const requestBuffer = buildIppRequest(IPP_OPS.CUPS_Get_Printers, 1, toIppScheme(endpoint));
 
         const performFetch = async () => {
-          const res = await fetchWithTimeout(endpoint, {
+          const res = await fetchWithTimeout(toHttpScheme(endpoint), {
             method: 'POST',
             headers: { 'Content-Type': 'application/ipp' },
             body: new Blob([requestBuffer], { type: 'application/ipp' })
@@ -438,7 +438,7 @@ async function syncPrinters(onProgress) {
         let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 2, toIppScheme(printer.url), false, 'Print Job', null, 'Chrome User', currentVersion);
         
         const performFetch = async (reqBuf) => {
-          const res = await fetchWithTimeout(printer.url, {
+          const res = await fetchWithTimeout(toHttpScheme(printer.url), {
             method: 'POST',
             headers: { 'Content-Type': 'application/ipp' },
             body: new Blob([reqBuf], { type: 'application/ipp' })

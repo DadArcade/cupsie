@@ -19,12 +19,13 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 function validateAndFormatUrl(urlStr) {
   let u = urlStr.trim();
-  // Automatically fix folks pasting native IPP URLs
-  if (u.startsWith('ipps://')) {
-    u = u.replace('ipps://', 'https://');
-  } else if (u.startsWith('ipp://')) {
-    u = u.replace('ipp://', 'http://');
+  if (!u) return '';
+  // Ensure it has a protocol scheme. If not, default to http://
+  if (!/^[a-zA-Z0-9+-.]+:\/\//.test(u)) {
+    u = 'http://' + u;
   }
+  // Lowercase the protocol scheme part (e.g. HTTP:// -> http://)
+  u = u.replace(/^([a-zA-Z0-9+-.]+):\/\//, (match, scheme) => scheme.toLowerCase() + '://');
   return u;
 }
 
@@ -38,10 +39,10 @@ function getMatchPattern(urlStr) {
   }
   
   // Convert IPP schemas to HTTP/S to match standard URL parsing
-  if (u.startsWith('ipps://')) {
-    u = u.replace('ipps://', 'https://');
-  } else if (u.startsWith('ipp://')) {
-    u = u.replace('ipp://', 'http://');
+  if (/^ipps:\/\//i.test(u)) {
+    u = u.replace(/^ipps:\/\//i, 'https://');
+  } else if (/^ipp:\/\//i.test(u)) {
+    u = u.replace(/^ipp:\/\//i, 'http://');
   }
 
   try {

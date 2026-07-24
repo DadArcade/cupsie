@@ -48,7 +48,7 @@
     "description": "Label for user custom IPP printers."
   },
   "userIppNote": {
-    "message": "Enter direct HTTP/HTTPS endpoint URLs and optional display names for your standalone printers (the extension will automatically convert ipp:// schemas upon saving).",
+    "message": "Enter direct HTTP/HTTPS or IPP/IPPS endpoint URLs and optional display names for your standalone printers (e.g., ipp://192.168.1.50:631/ipp/print or http://192.168.1.50:631/ipp/print).",
     "description": "Instructions for custom IPP printers."
   },
   "syncIntervalLabel": {

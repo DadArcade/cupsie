@@ -130,79 +130,76 @@ function saveOptions() {
   }
 }
 
-function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status) {
+async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status) {
   // Save to sync storage
-  chrome.storage.sync.set({
-    cupsServers: cupsServers,
-    ippPrinters: ippPrinters,
-    syncInterval: syncInterval
-  }, () => {
+  try {
+    await chrome.storage.sync.set({
+      cupsServers: cupsServers,
+      ippPrinters: ippPrinters,
+      syncInterval: syncInterval
+    });
+  } catch (e) {
+    console.error('Failed to save settings to chrome.storage.sync:', e);
+    status.textContent = chrome.i18n.getMessage('syncFailed', [e.message || 'Sync failed']);
+    status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+    status.style.color = '#f87171';
+    setTimeout(() => {
+      status.style.display = 'none';
+    }, 4000);
+    return;
+  }
+
+  // Connect to background page to trigger sync and track real-time progress
+  const port = chrome.runtime.connect({ name: 'sync_printers' });
+  port.onMessage.addListener((msg) => {
+    if (msg.status === 'progress') {
+      status.textContent = chrome.i18n.getMessage('syncProgress', [msg.completed.toString(), msg.total.toString()]);
+    } else if (msg.status === 'done') {
+      status.textContent = chrome.i18n.getMessage('syncSuccess');
+      status.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
+      status.style.color = '#34d399';
+      setTimeout(() => {
+        status.style.display = 'none';
+      }, 4000);
+      port.disconnect();
+    } else {
+      const errorMsg = msg.error || chrome.i18n.getMessage('unknownErrorOccurred');
+      status.textContent = chrome.i18n.getMessage('syncFailed', [errorMsg]);
+      status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+      status.style.color = '#f87171';
+      setTimeout(() => {
+        status.style.display = 'none';
+      }, 4000);
+      port.disconnect();
+    }
+  });
+
+  port.onDisconnect.addListener(() => {
     if (chrome.runtime.lastError) {
-      console.error('Failed to save settings to chrome.storage.sync:', chrome.runtime.lastError);
+      console.error('Sync port disconnected with error:', chrome.runtime.lastError);
       status.textContent = chrome.i18n.getMessage('syncFailed', [chrome.runtime.lastError.message]);
       status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
       status.style.color = '#f87171';
       setTimeout(() => {
         status.style.display = 'none';
       }, 4000);
-      return;
     }
-    // Connect to background page to trigger sync and track real-time progress
-    const port = chrome.runtime.connect({ name: 'sync_printers' });
-    port.onMessage.addListener((msg) => {
-      if (msg.status === 'progress') {
-        status.textContent = chrome.i18n.getMessage('syncProgress', [msg.completed.toString(), msg.total.toString()]);
-      } else if (msg.status === 'done') {
-        status.textContent = chrome.i18n.getMessage('syncSuccess');
-        status.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
-        status.style.color = '#34d399';
-        setTimeout(() => {
-          status.style.display = 'none';
-        }, 4000);
-        port.disconnect();
-      } else {
-        const errorMsg = msg.error || chrome.i18n.getMessage('unknownErrorOccurred');
-        status.textContent = chrome.i18n.getMessage('syncFailed', [errorMsg]);
-        status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-        status.style.color = '#f87171';
-        setTimeout(() => {
-          status.style.display = 'none';
-        }, 4000);
-        port.disconnect();
-      }
-    });
-
-    port.onDisconnect.addListener(() => {
-      if (chrome.runtime.lastError) {
-        console.error('Sync port disconnected with error:', chrome.runtime.lastError);
-        status.textContent = chrome.i18n.getMessage('syncFailed', [chrome.runtime.lastError.message]);
-        status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-        status.style.color = '#f87171';
-        setTimeout(() => {
-          status.style.display = 'none';
-        }, 4000);
-      }
-    });
   });
 }
 
-function restoreOptions() {
+async function restoreOptions() {
+  let managed = {};
   if (chrome.storage && chrome.storage.managed) {
-    chrome.storage.managed.get(['cupsServers', 'ippPrinters', 'syncInterval'], (managed) => {
-      // Clear lastError warning if it failed (e.g. policy not configured)
-      if (chrome.runtime.lastError) {
-        console.warn('Managed storage not available or policy not configured:', chrome.runtime.lastError.message);
-        restoreUserAndLocalOptions({});
-        return;
-      }
-      restoreUserAndLocalOptions(managed || {});
-    });
-  } else {
-    restoreUserAndLocalOptions({});
+    try {
+      managed = await chrome.storage.managed.get(['cupsServers', 'ippPrinters', 'syncInterval']) || {};
+    } catch (e) {
+      console.warn('Managed storage not available or policy not configured:', e.message);
+    }
   }
+  await restoreUserAndLocalOptions(managed);
 }
 
-function restoreUserAndLocalOptions(managed) {
+async function restoreUserAndLocalOptions(managed) {
   const hasManaged = managed && Object.keys(managed).length > 0;
   
   if (hasManaged) {
@@ -255,48 +252,51 @@ function restoreUserAndLocalOptions(managed) {
   }
 
   // Now query sync user configuration and local sync logs
-  chrome.storage.sync.get(['cupsServers', 'ippPrinters', 'syncInterval'], (syncItems) => {
-    if (chrome.runtime.lastError) {
-      console.error('Failed to load sync storage settings:', chrome.runtime.lastError);
-    }
-    chrome.storage.local.get(['lastSyncTime', 'syncResults'], (localItems) => {
-      if (chrome.runtime.lastError) {
-        console.error('Failed to load local storage settings:', chrome.runtime.lastError);
-      }
-      const items = { ...(syncItems || {}), ...(localItems || {}) };
-      if (items.cupsServers) {
-        const el = document.getElementById('cupsServers');
-        if (el) el.value = items.cupsServers.join('\n');
-      }
-      if (items.ippPrinters && items.ippPrinters.length > 0) {
-        const container = document.getElementById('ippPrintersContainer');
-        if (container) {
-          container.innerHTML = '';
-          items.ippPrinters.forEach(printer => {
-            const norm = normalizeIppPrinter(printer);
-            if (norm) {
-              addPrinterRow(norm.url, norm.name);
-            }
-          });
+  let syncItems = {};
+  let localItems = {};
+  try {
+    const [syncRes, localRes] = await Promise.all([
+      chrome.storage.sync.get(['cupsServers', 'ippPrinters', 'syncInterval']),
+      chrome.storage.local.get(['lastSyncTime', 'syncResults'])
+    ]);
+    syncItems = syncRes || {};
+    localItems = localRes || {};
+  } catch (e) {
+    console.error('Failed to load settings from storage:', e);
+  }
+
+  const items = { ...(syncItems || {}), ...(localItems || {}) };
+  if (items.cupsServers) {
+    const el = document.getElementById('cupsServers');
+    if (el) el.value = items.cupsServers.join('\n');
+  }
+  if (items.ippPrinters && items.ippPrinters.length > 0) {
+    const container = document.getElementById('ippPrintersContainer');
+    if (container) {
+      container.innerHTML = '';
+      items.ippPrinters.forEach(printer => {
+        const norm = normalizeIppPrinter(printer);
+        if (norm) {
+          addPrinterRow(norm.url, norm.name);
         }
-      } else {
-        addPrinterRow('', '');
-      }
-      // Apply local interval value only if it's not managed by enterprise policy
-      if (items.syncInterval !== undefined && (!managed || managed.syncInterval === undefined)) {
-        const syncInput = document.getElementById('syncInterval');
-        if (syncInput) syncInput.value = items.syncInterval;
-      }
-      if (items.lastSyncTime) {
-        const d = new Date(items.lastSyncTime);
-        const el = document.getElementById('lastSyncTime');
-        if (el) el.innerText = d.toLocaleString();
-      }
-      if (items.syncResults) {
-        renderSyncResults(items.syncResults);
-      }
-    });
-  });
+      });
+    }
+  } else {
+    addPrinterRow('', '');
+  }
+  // Apply local interval value only if it's not managed by enterprise policy
+  if (items.syncInterval !== undefined && (!managed || managed.syncInterval === undefined)) {
+    const syncInput = document.getElementById('syncInterval');
+    if (syncInput) syncInput.value = items.syncInterval;
+  }
+  if (items.lastSyncTime) {
+    const d = new Date(items.lastSyncTime);
+    const el = document.getElementById('lastSyncTime');
+    if (el) el.innerText = d.toLocaleString();
+  }
+  if (items.syncResults) {
+    renderSyncResults(items.syncResults);
+  }
 }
 
 function renderSyncResults(results) {

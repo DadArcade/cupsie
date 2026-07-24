@@ -230,9 +230,12 @@ chrome.runtime.onInstalled.addListener(async () => {
   }
 
   // Clear capabilities cache on extension update to ensure metadata schema is refreshed
-  chrome.storage.local.remove(['capabilitiesCache'], () => {
+  try {
+    await chrome.storage.local.remove(['capabilitiesCache']);
     console.log('Capabilities cache cleared for update.');
-  });
+  } catch (e) {
+    console.warn('Failed to clear capabilities cache:', e);
+  }
   updateAlarm().catch(e => console.error('Failed to update sync alarm:', e));
   syncPrinters().catch(e => console.error('Failed to sync printers during install:', e));
 });
@@ -556,25 +559,19 @@ async function syncPrinters(onProgress) {
 // printerProvider API Hooks
 // ----------------------------------------------------
 
-chrome.printerProvider.onGetPrintersRequested.addListener((callback) => {
+chrome.printerProvider.onGetPrintersRequested.addListener(async (callback) => {
   console.log('Print dialog opened: returning cached printers.');
   try {
-    chrome.storage.local.get(['cachedPrinters'], (items) => {
-      if (chrome.runtime.lastError) {
-        console.error('Failed to retrieve cached printers:', chrome.runtime.lastError);
-        callback([]);
-        return;
-      }
-      const printers = (items && items.cachedPrinters) || [];
-      console.log(`Returning ${printers.length} printer(s) from storage cache.`);
-      // Map to safe PrinterInfo object to conform to Chrome extension API specification
-      const safePrinters = printers.map(p => ({
-        id: p.id,
-        name: p.name,
-        description: p.description
-      }));
-      callback(safePrinters);
-    });
+    const items = await chrome.storage.local.get(['cachedPrinters']);
+    const printers = (items && items.cachedPrinters) || [];
+    console.log(`Returning ${printers.length} printer(s) from storage cache.`);
+    // Map to safe PrinterInfo object to conform to Chrome extension API specification
+    const safePrinters = printers.map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description
+    }));
+    callback(safePrinters);
   } catch (e) {
     console.error('Error initiating getPrinters lookup from local storage:', e);
     callback([]);

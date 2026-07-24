@@ -15,14 +15,13 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 });
 
-function loadLogs() {
-  chrome.storage.local.get(['logs'], (items) => {
-    if (chrome.runtime.lastError) {
-      console.error('Failed to retrieve logs:', chrome.runtime.lastError);
-      return;
-    }
+async function loadLogs() {
+  try {
+    const items = await chrome.storage.local.get(['logs']);
     renderLogs(items ? items.logs || [] : []);
-  });
+  } catch (e) {
+    console.error('Failed to retrieve logs:', e);
+  }
 }
 
 function renderLogs(logs) {
@@ -73,26 +72,27 @@ function renderLogs(logs) {
   }
 }
 
-function clearLogs() {
+async function clearLogs() {
   if (confirm(chrome.i18n.getMessage('confirmClearLogs'))) {
-    chrome.storage.local.set({ logs: [] }, () => {
-      if (chrome.runtime.lastError) {
-        console.error('Failed to clear logs:', chrome.runtime.lastError);
-        return;
-      }
-      loadLogs();
-    });
+    try {
+      await chrome.storage.local.set({ logs: [] });
+      await loadLogs();
+    } catch (e) {
+      console.error('Failed to clear logs:', e);
+    }
   }
 }
 
-function downloadLogs() {
-  chrome.storage.local.get(['logs'], (items) => {
-    if (chrome.runtime.lastError) {
-      console.error('Failed to retrieve logs for download:', chrome.runtime.lastError);
-      return;
-    }
-    const logs = items ? items.logs || [] : [];
-    if (logs.length === 0) return;
+async function downloadLogs() {
+  let items;
+  try {
+    items = await chrome.storage.local.get(['logs']);
+  } catch (e) {
+    console.error('Failed to retrieve logs for download:', e);
+    return;
+  }
+  const logs = items ? items.logs || [] : [];
+  if (logs.length === 0) return;
 
     let text = chrome.i18n.getMessage('downloadHeaderTitle') + '\n';
     text += '======================================\n\n';

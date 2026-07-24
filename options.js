@@ -124,9 +124,13 @@ function saveOptions() {
         }, 4000);
         return;
       }
+      const warningBanner = document.getElementById('permissionsWarning');
+      if (warningBanner) warningBanner.style.display = 'none';
       saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status);
     });
   } else {
+    const warningBanner = document.getElementById('permissionsWarning');
+    if (warningBanner) warningBanner.style.display = 'none';
     saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status);
   }
 }
@@ -297,6 +301,58 @@ async function restoreUserAndLocalOptions(managed) {
   }
   if (items.syncResults) {
     renderSyncResults(items.syncResults);
+  }
+
+  // Check if connection permissions for all configured and managed hosts are available
+  const uniqueOrigins = new Set();
+  if (managed) {
+    if (managed.cupsServers) {
+      managed.cupsServers.forEach(url => {
+        const origin = getMatchPattern(url);
+        if (origin) uniqueOrigins.add(origin);
+      });
+    }
+    if (managed.ippPrinters) {
+      managed.ippPrinters.forEach(p => {
+        const norm = normalizeIppPrinter(p);
+        if (norm) {
+          const origin = getMatchPattern(norm.url);
+          if (origin) uniqueOrigins.add(origin);
+        }
+      });
+    }
+  }
+  if (items.cupsServers) {
+    items.cupsServers.forEach(url => {
+      const origin = getMatchPattern(url);
+      if (origin) uniqueOrigins.add(origin);
+    });
+  }
+  if (items.ippPrinters) {
+    items.ippPrinters.forEach(p => {
+      const norm = normalizeIppPrinter(p);
+      if (norm) {
+        const origin = getMatchPattern(norm.url);
+        if (origin) uniqueOrigins.add(origin);
+      }
+    });
+  }
+
+  const originsArray = Array.from(uniqueOrigins);
+  if (originsArray.length > 0) {
+    chrome.permissions.contains({ origins: originsArray }, (hasPermissions) => {
+      if (chrome.runtime.lastError) {
+        console.error('Permission check error:', chrome.runtime.lastError);
+        return;
+      }
+      const warningBanner = document.getElementById('permissionsWarning');
+      if (warningBanner) {
+        warningBanner.style.display = hasPermissions ? 'none' : 'block';
+      }
+    });
+  } else {
+    const warningBanner = document.getElementById('permissionsWarning');
+    if (warningBanner) warningBanner.style.display = 'none';
   }
 }
 

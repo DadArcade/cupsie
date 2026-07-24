@@ -258,6 +258,19 @@
     .printer-row-managed .managed-name {
       flex: 1;
     }
+
+    .warning-banner {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 8px;
+      display: none;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+      background-color: rgba(245, 158, 11, 0.15);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
   </style>
 </head>
 
@@ -320,6 +333,10 @@
         style="list-style-type: none; padding-left: 0; font-size: 13px; max-height: 150px; overflow-y: auto; margin: 0;">
       </ul>
     </div>
+  </div>
+
+  <div id="permissionsWarning" class="warning-banner" data-i18n="syncedPermissionsMissing">
+    Connection permissions for some synced printers are missing on this device. Please click 'Save Settings' to grant access.
   </div>
 
   <button id="saveBtn" data-i18n="saveSettingsButton">Save Settings</button>

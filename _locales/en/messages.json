@@ -612,5 +612,9 @@
   "permissionsRequired": {
     "message": "Connection permissions are required to sync these printers.",
     "description": "Error displayed when user denies permission to query the printer host."
+  },
+  "syncedPermissionsMissing": {
+    "message": "Connection permissions for some synced printers are missing on this device. Please click 'Save Settings' to grant access.",
+    "description": "Warning message shown when restored sync settings require permissions that haven't been granted on this device."
   }
 }

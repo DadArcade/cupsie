@@ -124,5 +124,4 @@ async function downloadLogs() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }, 100);
-  });
 }

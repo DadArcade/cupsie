@@ -2,6 +2,10 @@
 
 **Cupsie Printer Provider** is a Chrome extension that allows to add CUPS print queues and standalone IPP/IPPS printers directly into the native Chrome Print Dialog using Chrome's `printerProvider` API.
 
+## Install it from the Chrome Web Store
+
+Open [Cupsie Extension](https://chromewebstore.google.com/detail/dekecaodhfljnecmmkenlmjfcbmdokno/) on Chrome Web Store and click **Add to Chrome** button.
+
 ---
 
 ## What It Does

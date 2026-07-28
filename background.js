@@ -30,8 +30,8 @@ async function processLogQueue() {
     const items = await chrome.storage.local.get(['logs']);
     let logs = items.logs || [];
     logs.push(...batch);
-    if (logs.length > 24) {
-      logs = logs.slice(-24); // Keep only last 24 logs
+    if (logs.length > 2048) {
+      logs = logs.slice(-2048); // Keep only last 2048 logs
     }
     await chrome.storage.local.set({ logs });
   } catch (e) {
@@ -88,6 +88,126 @@ function toHttpScheme(url) {
   if (/^ipp:\/\//i.test(url)) return url.replace(/^ipp:\/\//i, 'http://');
   return url;
 }
+
+// --- Printer Authentication Helpers ---
+async function getCredentialsForUrl(url) {
+  try {
+    const storage = await chrome.storage.local.get(['deviceCredentials']);
+    const credentials = storage.deviceCredentials || {};
+    // Try exact URL match
+    if (credentials[url]) {
+      return credentials[url];
+    }
+    // Try matching by hostname + port
+    const targetUrl = new URL(toHttpScheme(url));
+    for (const [credUrl, cred] of Object.entries(credentials)) {
+      try {
+        const cUrl = new URL(toHttpScheme(credUrl));
+        if (cUrl.hostname === targetUrl.hostname && cUrl.port === targetUrl.port) {
+          return cred;
+        }
+      } catch (e) {
+        // ignore invalid urls
+      }
+    }
+  } catch (e) {
+    console.error('Error reading credentials from storage:', e);
+  }
+  return null;
+}
+
+async function fetchWithAuth(url, options = {}, timeoutMs = 8000) {
+  const creds = await getCredentialsForUrl(url);
+  const headers = { ...(options.headers || {}) };
+  if (creds && creds.username && creds.password) {
+    const authHeader = 'Basic ' + btoa(unescape(encodeURIComponent(creds.username + ':' + creds.password)));
+    headers['Authorization'] = authHeader;
+  }
+  return fetchWithTimeout(toHttpScheme(url), { ...options, headers }, timeoutMs);
+}
+
+async function markDeviceAuthRequired(url, type, name = '') {
+  try {
+    const storage = await chrome.storage.local.get(['authRequiredDevices']);
+    const devices = storage.authRequiredDevices || {};
+    devices[url] = {
+      type: type,
+      name: name || url,
+      timestamp: Date.now()
+    };
+    await chrome.storage.local.set({ authRequiredDevices: devices });
+    console.log(`Device marked as requiring auth: ${url}`);
+  } catch (e) {
+    console.error('Failed to mark device as requiring auth:', e);
+  }
+}
+
+async function clearDeviceAuthRequired(url) {
+  try {
+    const storage = await chrome.storage.local.get(['authRequiredDevices']);
+    const devices = storage.authRequiredDevices || {};
+    if (devices[url]) {
+      delete devices[url];
+      await chrome.storage.local.set({ authRequiredDevices: devices });
+      console.log(`Device cleared from auth required: ${url}`);
+    }
+  } catch (e) {
+    console.error('Failed to clear device from auth required:', e);
+  }
+}
+
+async function checkAndPromptAuth() {
+  try {
+    const storage = await chrome.storage.local.get(['authRequiredDevices', 'loginWindowId']);
+    const devices = storage.authRequiredDevices || {};
+    if (Object.keys(devices).length > 0) {
+      let loginWindowId = storage.loginWindowId;
+      let windowExists = false;
+
+      if (loginWindowId !== undefined) {
+        try {
+          const win = await chrome.windows.get(loginWindowId);
+          if (win) {
+            windowExists = true;
+            await chrome.windows.update(loginWindowId, { focused: true });
+            console.log('Login dialog already open, focusing existing window.');
+          }
+        } catch (e) {
+          // Window does not exist or has been closed
+          console.log('Saved login window not found, will create a new one.');
+        }
+      }
+
+      if (!windowExists) {
+        console.log('Opening login dialog for unauthorized devices...');
+        const win = await chrome.windows.create({
+          url: chrome.runtime.getURL('login.html'),
+          type: 'popup',
+          width: 720,
+          height: 570,
+          focused: true
+        });
+        await chrome.storage.local.set({ loginWindowId: win.id });
+      }
+    }
+  } catch (e) {
+    console.error('Error checking auth status on print dialog open:', e);
+  }
+}
+
+// Clear login window tracking on close
+chrome.windows.onRemoved.addListener(async (windowId) => {
+  try {
+    const storage = await chrome.storage.local.get(['loginWindowId']);
+    if (storage.loginWindowId === windowId) {
+      await chrome.storage.local.remove(['loginWindowId']);
+      console.log('Login window ID cleared from storage.');
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+});
+
 
 
 // Helper to update background alarm with active sync interval (managed policy wins)
@@ -279,15 +399,21 @@ function normalizeIppPrinter(p) {
 }
 
 let activeSyncPromise = null;
+let isCurrentSyncInteractive = false;
 const progressCallbacks = new Set();
 
-async function syncPrinters(onProgress) {
+async function syncPrinters(onProgress, isInteractive = false) {
   if (typeof onProgress === 'function') {
     progressCallbacks.add(onProgress);
+  }
+  if (isInteractive) {
+    isCurrentSyncInteractive = true;
   }
   if (activeSyncPromise) {
     return activeSyncPromise;
   }
+
+  isCurrentSyncInteractive = !!isInteractive;
 
   activeSyncPromise = (async () => {
     const startTime = Date.now();
@@ -327,12 +453,35 @@ async function syncPrinters(onProgress) {
     }
     const ippPrinters = Array.from(ippPrintersMap.values());
 
-    console.log(`Config: ${cupsServers.length} CUPS server(s), ${ippPrinters.length} standalone printer(s).`);
+    let ignoredAuthDevices = {};
+    try {
+      const storage = await chrome.storage.local.get(['ignoredAuthDevices']);
+      ignoredAuthDevices = storage.ignoredAuthDevices || {};
+    } catch (e) {
+      console.warn('Failed to load ignoredAuthDevices:', e);
+    }
+
+    const activeCups = cupsServers.filter(url => !ignoredAuthDevices[url]);
+    const activeIpp = ippPrinters.filter(p => !ignoredAuthDevices[p.url]);
+
+    console.log(`Config: ${cupsServers.length} CUPS server(s) (${activeCups.length} active), ${ippPrinters.length} standalone printer(s) (${activeIpp.length} active).`);
 
     let newPrinters = [];
     let syncResults = {};
 
-    const totalTasks = cupsServers.length + ippPrinters.length;
+    // Populate sync results for skipped/ignored devices
+    for (const url of cupsServers) {
+      if (ignoredAuthDevices[url]) {
+        syncResults[url] = { status: 'success', message: chrome.i18n.getMessage('sync_skipped_ignored') || 'Skipped (ignored)' };
+      }
+    }
+    for (const p of ippPrinters) {
+      if (ignoredAuthDevices[p.url]) {
+        syncResults[p.url] = { status: 'success', message: chrome.i18n.getMessage('sync_skipped_ignored') || 'Skipped (ignored)' };
+      }
+    }
+
+    const totalTasks = activeCups.length + activeIpp.length;
     let completedTasks = 0;
 
     const reportProgress = () => {
@@ -355,7 +504,7 @@ async function syncPrinters(onProgress) {
         const requestBuffer = buildIppRequest(IPP_OPS.CUPS_Get_Printers, 1, toIppScheme(endpoint));
 
         const performFetch = async () => {
-          const res = await fetchWithTimeout(toHttpScheme(endpoint), {
+          const res = await fetchWithAuth(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/ipp' },
             body: new Blob([requestBuffer], { type: 'application/ipp' })
@@ -371,6 +520,7 @@ async function syncPrinters(onProgress) {
         console.log(`  HTTP response from ${getHostname(endpoint)}: ${response.status} ${response.statusText}`);
 
         if (response.ok) {
+          await clearDeviceAuthRequired(serverUrl);
           const contentType = response.headers.get('Content-Type') || '';
           if (contentType && !contentType.includes('application/ipp')) {
             console.warn(`  ✖ Non-IPP response from CUPS server: ${contentType}`);
@@ -416,6 +566,9 @@ async function syncPrinters(onProgress) {
           syncResults[serverUrl] = { status: 'success', message: chrome.i18n.getMessage('sync_success_queues', [printerGroups.length]) };
         } else {
           console.warn(`  ✖ HTTP ${response.status} — server rejected the request.`);
+          if (response.status === 401) {
+            await markDeviceAuthRequired(serverUrl, 'cups');
+          }
           syncResults[serverUrl] = { status: 'error', message: chrome.i18n.getMessage('sync_error_http', [response.status]) };
         }
       } catch (e) {
@@ -438,7 +591,7 @@ async function syncPrinters(onProgress) {
         let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 2, toIppScheme(printer.url), false, 'Print Job', null, 'Chrome User', currentVersion);
         
         const performFetch = async (reqBuf) => {
-          const res = await fetchWithTimeout(toHttpScheme(printer.url), {
+          const res = await fetchWithAuth(printer.url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/ipp' },
             body: new Blob([reqBuf], { type: 'application/ipp' })
@@ -454,6 +607,7 @@ async function syncPrinters(onProgress) {
         console.log(`  HTTP response from ${printerHost}: ${response.status} ${response.statusText}`);
 
         if (response.ok) {
+          await clearDeviceAuthRequired(printer.url);
           const contentType = response.headers.get('Content-Type') || '';
           if (contentType && !contentType.includes('application/ipp')) {
             console.warn(`  ✖ Non-IPP response from standalone printer: ${contentType}`);
@@ -502,6 +656,9 @@ async function syncPrinters(onProgress) {
           syncResults[printer.url] = { status: 'success', message: chrome.i18n.getMessage('sync_success_discovered', [name]) };
         } else {
           console.warn(`  ✖ HTTP ${response.status} — printer rejected the request.`);
+          if (response.status === 401) {
+            await markDeviceAuthRequired(printer.url, 'ipp', printer.name);
+          }
           syncResults[printer.url] = { status: 'error', message: chrome.i18n.getMessage('sync_error_http', [response.status]) };
         }
       } catch (e) {
@@ -515,10 +672,10 @@ async function syncPrinters(onProgress) {
     };
 
     const tasks = [];
-    for (const serverUrl of cupsServers) {
+    for (const serverUrl of activeCups) {
       tasks.push(serverTask(serverUrl));
     }
-    for (const printer of ippPrinters) {
+    for (const printer of activeIpp) {
       tasks.push(printerTask(printer));
     }
 
@@ -549,7 +706,11 @@ async function syncPrinters(onProgress) {
   try {
     return await activeSyncPromise;
   } finally {
+    if (isCurrentSyncInteractive) {
+      checkAndPromptAuth();
+    }
     activeSyncPromise = null;
+    isCurrentSyncInteractive = false;
     progressCallbacks.clear();
   }
 }
@@ -561,6 +722,10 @@ async function syncPrinters(onProgress) {
 
 chrome.printerProvider.onGetPrintersRequested.addListener(async (callback) => {
   console.log('Print dialog opened: returning cached printers.');
+  
+  // Launch credentials dialog if any printer/server needs authentication
+  checkAndPromptAuth();
+
   try {
     const items = await chrome.storage.local.get(['cachedPrinters']);
     const printers = (items && items.cachedPrinters) || [];
@@ -577,11 +742,18 @@ chrome.printerProvider.onGetPrintersRequested.addListener(async (callback) => {
     callback([]);
   }
 });
-
 chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, callback) => {
   console.log(`Capabilities requested for: ${printerId}`);
 
   try {
+    const storage = await chrome.storage.local.get(['ignoredAuthDevices']);
+    const ignored = storage.ignoredAuthDevices || {};
+    if (ignored[printerId]) {
+      console.log(`Capabilities request skipped: device is ignored by user due to auth requirements: ${printerId}`);
+      callback(buildCDD({}));
+      return;
+    }
+
     const username = await getUsername();
 
     let cachedEntry = null;
@@ -612,7 +784,7 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
       let currentVersion = 0x0200;
       let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 3, toIppScheme(printerId), false, 'Print Job', null, 'Chrome User', currentVersion);
       const performFetch = async (reqBuf) => {
-        const res = await fetchWithTimeout(toHttpScheme(printerId), {
+        const res = await fetchWithAuth(printerId, {
           method: 'POST',
           headers: { 'Content-Type': 'application/ipp' },
           body: new Blob([reqBuf], { type: 'application/ipp' })
@@ -626,6 +798,11 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
       let response = await retry(() => performFetch(requestBuffer), [], { retries: 3, delay: 1000, url: printerId });
 
       let isSuccess = response.ok;
+      if (response.status === 401) {
+        await markDeviceAuthRequired(printerId, 'ipp');
+        checkAndPromptAuth();
+      }
+
       if (isSuccess) {
         const contentType = response.headers.get('Content-Type') || '';
         if (contentType && !contentType.includes('application/ipp')) {
@@ -635,6 +812,7 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
       }
 
       if (isSuccess) {
+        await clearDeviceAuthRequired(printerId);
         let responseBuffer = await response.arrayBuffer();
         let parsed = parseIppResponse(responseBuffer);
 
@@ -648,6 +826,10 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
             parsed = parseIppResponse(responseBuffer);
           } else {
             console.warn(`Failed HTTP response when checking capabilities for ${printerId} on IPP 1.1 retry`);
+            if (response.status === 401) {
+              await markDeviceAuthRequired(printerId, 'ipp');
+              checkAndPromptAuth();
+            }
             isSuccess = false;
           }
         }
@@ -748,6 +930,15 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
 chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) => {
   console.log(`Print job requested for: ${printJob.printerId}`);
   try {
+    const storage = await chrome.storage.local.get(['ignoredAuthDevices']);
+    const ignored = storage.ignoredAuthDevices || {};
+    if (ignored[printJob.printerId]) {
+      console.warn(`Print job blocked: device is ignored by user due to auth requirements: ${printJob.printerId}`);
+      showPrintFailureNotification(printJob.title, chrome.i18n.getMessage('errHttpUnauthorized'));
+      callback('FAILED');
+      return;
+    }
+
     const username = await getUsername();
     const userName = username || 'Chrome User';
 
@@ -796,7 +987,7 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
 
     // Submit the print job to the endpoint
     const submitPrintJob = async () => {
-      const res = await fetchWithTimeout(toHttpScheme(printJob.printerId), {
+      const res = await fetchWithAuth(printJob.printerId, {
         method: 'POST',
         headers: { 'Content-Type': 'application/ipp' },
         body: new Blob([payload], { type: 'application/ipp' })
@@ -810,6 +1001,7 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
     const response = await retry(submitPrintJob, [], { retries: 2, delay: 1500, url: printJob.printerId });
 
     if (response.ok) {
+      await clearDeviceAuthRequired(printJob.printerId);
       const contentType = response.headers.get('Content-Type') || '';
       if (contentType && !contentType.includes('application/ipp')) {
         console.warn(`Print job response was not IPP: ${contentType}`);
@@ -841,6 +1033,8 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
       console.warn(`Print job POST failed with HTTP status: ${response.status}`);
       let reason = chrome.i18n.getMessage('sync_error_http', [response.status]);
       if (response.status === 401 || response.status === 403) {
+        await markDeviceAuthRequired(printJob.printerId, 'ipp');
+        checkAndPromptAuth();
         reason = chrome.i18n.getMessage('errHttpUnauthorized');
       } else if (response.status === 407) {
         reason = chrome.i18n.getMessage('errHttpProxyAuth');
@@ -861,7 +1055,7 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'sync_printers') {
     console.log('Explicit sync request received.');
-    syncPrinters()
+    syncPrinters(undefined, true)
       .then(() => {
         sendResponse({ status: 'done' });
       })
@@ -889,7 +1083,7 @@ chrome.runtime.onConnect.addListener((port) => {
           console.warn('Failed to post progress message to port:', e);
         }
       }
-    })
+    }, true)
       .then(() => {
         if (isConnected) {
           try {

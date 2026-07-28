@@ -161,6 +161,10 @@
     "message": "Skipped (unauthorized)",
     "description": "Status when the current user is not in the allowed user list."
   },
+  "sync_skipped_ignored": {
+    "message": "Skipped (Authentication ignored by user)",
+    "description": "Status message shown when a printer is skipped because user selected Don't Ask Again."
+  },
   "sync_success_discovered": {
     "message": "Discovered: \"$NAME$\"",
     "description": "Success message for standalone printer sync.",
@@ -180,7 +184,7 @@
     "description": "Main header on the logs page."
   },
   "logsSubtitle": {
-    "message": "Last 24 log entries captured from background operations",
+    "message": "Last 2048 log entries captured from background operations",
     "description": "Subtitle explaining logs duration."
   },
   "refreshButton": {
@@ -616,5 +620,45 @@
   "syncedPermissionsMissing": {
     "message": "Connection permissions for some synced printers are missing on this device. Please click 'Save Settings' to grant access.",
     "description": "Warning message shown when restored sync settings require permissions that haven't been granted on this device."
+  },
+  "loginPageTitle": {
+    "message": "Printer Authentication",
+    "description": "Title of the login dialog window."
+  },
+  "loginPageHeader": {
+    "message": "Printer Login Required",
+    "description": "Header in the login dialog."
+  },
+  "loginPageSubheader": {
+    "message": "The following printer(s) or CUPS server(s) require credentials to connect:",
+    "description": "Description text in the login dialog."
+  },
+  "loginUsernamePlaceholder": {
+    "message": "Username",
+    "description": "Placeholder for the username input field."
+  },
+  "loginPasswordPlaceholder": {
+    "message": "Password",
+    "description": "Placeholder for the password input field."
+  },
+  "loginSaveButton": {
+    "message": "Save Credentials",
+    "description": "Button to save credentials and try sync."
+  },
+  "loginCancelButton": {
+    "message": "Cancel",
+    "description": "Button to close the login dialog."
+  },
+  "loginErrorAuthFailed": {
+    "message": "Authentication failed. Please verify credentials.",
+    "description": "Error message when verification fails."
+  },
+  "loginSuccessMsg": {
+    "message": "Connecting...",
+    "description": "Status message when credentials verified."
+  },
+  "loginIgnoreCheckbox": {
+    "message": "Don't ask again (skip this printer/server)",
+    "description": "Label for the ignore/skip checkbox on the login dialog."
   }
 }

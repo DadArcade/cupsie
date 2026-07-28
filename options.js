@@ -136,6 +136,13 @@ function saveOptions() {
 }
 
 async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status) {
+  // Clear auth and ignore tracking flags to re-test connections cleanly on save
+  try {
+    await chrome.storage.local.remove(['ignoredAuthDevices', 'authRequiredDevices']);
+  } catch (e) {
+    console.warn('Failed to reset local auth configuration flags:', e);
+  }
+
   // Save to sync storage
   try {
     await chrome.storage.sync.set({

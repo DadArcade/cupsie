@@ -720,5 +720,9 @@
   "removeCredentialTitle": {
     "message": "Remove credential",
     "description": "Tooltip for the remove button of a stored credential."
+  },
+  "loginDisclaimer": {
+    "message": "Your password will be stored in plaintext on disk.",
+    "description": "Warning message shown when user is about to save credentials."
   }
 }

@@ -12,12 +12,7 @@ We are committed to maintaining the privacy and security of your personal data.
 
 The Extension only accesses the minimum necessary information required to perform its core function: locating network printers and facilitating print jobs.
 
-### A. Chrome Profile Identity (Email)
-- **What is accessed**: The Extension requests access to your primary Google Account profile information (via the `chrome.identity` API).
-- **Purpose**: We read your email address to extract the username prefix (e.g., `user` from `user@example.com`). This is used to check your printing authorization against enterprise-managed printer access allowlists and denylists.
-- **Processing**: The evaluation is performed **entirely locally** on your machine. Your email address is never sent to us or any remote third-party service.
-
-### B. Network Printer Information
+### A. Network Printer Information
 - **What is accessed**: Printer connection URLs and IP addresses configured manually by you or distributed via enterprise policy.
 - **Purpose**: The Extension connects directly to these network URLs (using standard IPP or CUPS protocols) to query printer capabilities and transmit print jobs.
 - **Processing**: Print jobs and printer status queries travel directly from your local browser to the target printer endpoints. We do not inspect, intercept, or log the contents of your printed documents.

@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const deviceUrls = Object.keys(authDevices);
   if (deviceUrls.length === 0) {
-    statusMessage.textContent = 'No authentication required at this time.';
+    statusMessage.textContent = chrome.i18n.getMessage('loginNoAuthRequired') || 'No authentication required at this time.';
     statusMessage.className = 'status success';
     saveBtn.disabled = true;
     setTimeout(() => window.close(), 1500);
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     } catch (e) {
       console.error('Failed to save device settings:', e);
-      showError('Failed to save settings.');
+      showError(chrome.i18n.getMessage('loginErrorSaveFailed') || 'Failed to save settings.');
       saveBtn.disabled = false;
       cancelBtn.disabled = false;
       return;
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (chrome.runtime.lastError) {
         console.error('Runtime message error:', chrome.runtime.lastError);
-        showError('Communication error with background page.');
+        showError(chrome.i18n.getMessage('loginErrorCommError') || 'Communication error with background page.');
         return;
       }
 
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (stillFailing) {
           showError(chrome.i18n.getMessage('loginErrorAuthFailed') || 'Authentication failed. Please verify credentials.');
         } else {
-          statusMessage.textContent = 'All connections verified successfully!';
+          statusMessage.textContent = chrome.i18n.getMessage('loginSuccessVerified') || 'All connections verified successfully!';
           statusMessage.className = 'status success';
           setTimeout(() => {
             window.close();
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } catch (e) {
         console.error('Failed to verify sync results:', e);
-        showError('Verification failed.');
+        showError(chrome.i18n.getMessage('loginErrorVerificationFailed') || 'Verification failed.');
       }
     });
   });

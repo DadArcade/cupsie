@@ -1,3 +1,5 @@
+let loadedCredentials = {};
+
 document.addEventListener('DOMContentLoaded', () => {
   restoreOptions();
   document.getElementById('addIppPrinterBtn').addEventListener('click', () => {
@@ -77,6 +79,7 @@ function saveOptions() {
   });
 
   const syncInterval = parseInt(document.getElementById('syncInterval').value, 10);
+  const defaultRequestingUser = document.getElementById('defaultRequestingUser').value.trim();
 
   const status = document.getElementById('status');
   if (isNaN(syncInterval) || syncInterval < 1 || syncInterval > 1440) {
@@ -126,16 +129,16 @@ function saveOptions() {
       }
       const warningBanner = document.getElementById('permissionsWarning');
       if (warningBanner) warningBanner.style.display = 'none';
-      saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status);
+      saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser, status);
     });
   } else {
     const warningBanner = document.getElementById('permissionsWarning');
     if (warningBanner) warningBanner.style.display = 'none';
-    saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status);
+    saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser, status);
   }
 }
 
-async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status) {
+async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser, status) {
   // Clear auth and ignore tracking flags to re-test connections cleanly on save
   try {
     await chrome.storage.local.remove(['ignoredAuthDevices', 'authRequiredDevices']);
@@ -143,15 +146,21 @@ async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status)
     console.warn('Failed to reset local auth configuration flags:', e);
   }
 
-  // Save to sync storage
+  // Save to sync storage and local storage
   try {
-    await chrome.storage.sync.set({
-      cupsServers: cupsServers,
-      ippPrinters: ippPrinters,
-      syncInterval: syncInterval
-    });
+    await Promise.all([
+      chrome.storage.sync.set({
+        cupsServers: cupsServers,
+        ippPrinters: ippPrinters,
+        syncInterval: syncInterval,
+        defaultRequestingUser: defaultRequestingUser
+      }),
+      chrome.storage.local.set({
+        deviceCredentials: loadedCredentials
+      })
+    ]);
   } catch (e) {
-    console.error('Failed to save settings to chrome.storage.sync:', e);
+    console.error('Failed to save settings:', e);
     status.textContent = chrome.i18n.getMessage('syncFailed', [e.message || 'Sync failed']);
     status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
     status.style.color = '#f87171';
@@ -174,6 +183,7 @@ async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status)
         status.style.display = 'none';
       }, 4000);
       port.disconnect();
+      restoreOptions();
     } else {
       const errorMsg = msg.error || chrome.i18n.getMessage('unknownErrorOccurred');
       status.textContent = chrome.i18n.getMessage('syncFailed', [errorMsg]);
@@ -183,6 +193,7 @@ async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, status)
         status.style.display = 'none';
       }, 4000);
       port.disconnect();
+      restoreOptions();
     }
   });
 
@@ -203,7 +214,7 @@ async function restoreOptions() {
   let managed = {};
   if (chrome.storage && chrome.storage.managed) {
     try {
-      managed = await chrome.storage.managed.get(['cupsServers', 'ippPrinters', 'syncInterval']) || {};
+      managed = await chrome.storage.managed.get(['cupsServers', 'ippPrinters', 'syncInterval', 'defaultRequestingUser']) || {};
     } catch (e) {
       console.warn('Managed storage not available or policy not configured:', e.message);
     }
@@ -261,6 +272,15 @@ async function restoreUserAndLocalOptions(managed) {
       const badge = document.getElementById('managedIntervalBadge');
       if (badge) badge.style.display = 'inline';
     }
+    if (managed.defaultRequestingUser !== undefined) {
+      const userInput = document.getElementById('defaultRequestingUser');
+      if (userInput) {
+        userInput.value = managed.defaultRequestingUser;
+        userInput.disabled = true;
+      }
+      const badge = document.getElementById('managedUserBadge');
+      if (badge) badge.style.display = 'inline';
+    }
   }
 
   // Now query sync user configuration and local sync logs
@@ -268,8 +288,8 @@ async function restoreUserAndLocalOptions(managed) {
   let localItems = {};
   try {
     const [syncRes, localRes] = await Promise.all([
-      chrome.storage.sync.get(['cupsServers', 'ippPrinters', 'syncInterval']),
-      chrome.storage.local.get(['lastSyncTime', 'syncResults'])
+      chrome.storage.sync.get(['cupsServers', 'ippPrinters', 'syncInterval', 'defaultRequestingUser']),
+      chrome.storage.local.get(['lastSyncTime', 'syncResults', 'deviceCredentials'])
     ]);
     syncItems = syncRes || {};
     localItems = localRes || {};
@@ -301,6 +321,11 @@ async function restoreUserAndLocalOptions(managed) {
     const syncInput = document.getElementById('syncInterval');
     if (syncInput) syncInput.value = items.syncInterval;
   }
+  // Apply local requesting username value only if it's not managed by enterprise policy
+  if (items.defaultRequestingUser !== undefined && (!managed || managed.defaultRequestingUser === undefined)) {
+    const userInput = document.getElementById('defaultRequestingUser');
+    if (userInput) userInput.value = items.defaultRequestingUser;
+  }
   if (items.lastSyncTime) {
     const d = new Date(items.lastSyncTime);
     const el = document.getElementById('lastSyncTime');
@@ -309,6 +334,9 @@ async function restoreUserAndLocalOptions(managed) {
   if (items.syncResults) {
     renderSyncResults(items.syncResults);
   }
+
+  loadedCredentials = items.deviceCredentials || {};
+  renderStoredCredentials(loadedCredentials);
 
   // Check if connection permissions for all configured and managed hosts are available
   const uniqueOrigins = new Set();
@@ -439,4 +467,57 @@ function addPrinterRow(url = '', name = '') {
   row.appendChild(nameInput);
   row.appendChild(removeBtn);
   container.appendChild(row);
+}
+
+function renderStoredCredentials(credentials) {
+  const container = document.getElementById('credentialsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const entries = Object.entries(credentials);
+  if (entries.length === 0) {
+    const emptyMsg = document.createElement('p');
+    emptyMsg.className = 'note';
+    emptyMsg.setAttribute('data-i18n', 'noStoredCredentials');
+    emptyMsg.textContent = chrome.i18n.getMessage('noStoredCredentials') || 'No stored credentials found.';
+    container.appendChild(emptyMsg);
+    return;
+  }
+
+  entries.forEach(([url, creds]) => {
+    const row = document.createElement('div');
+    row.className = 'credentials-row';
+    row.dataset.url = url;
+
+    const urlInput = document.createElement('input');
+    urlInput.type = 'text';
+    urlInput.className = 'credential-url';
+    urlInput.value = url;
+    urlInput.readOnly = true;
+
+    const usernameInput = document.createElement('input');
+    usernameInput.type = 'text';
+    usernameInput.className = 'credential-username';
+    usernameInput.value = creds.username || '';
+    usernameInput.readOnly = true;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-btn';
+    removeBtn.textContent = '\u2715';
+    removeBtn.title = chrome.i18n.getMessage('removeCredentialTitle') || 'Remove credential';
+
+    removeBtn.addEventListener('click', () => {
+      delete loadedCredentials[url];
+      row.remove();
+      if (container.children.length === 0) {
+        renderStoredCredentials({});
+      }
+    });
+
+    row.appendChild(urlInput);
+    row.appendChild(usernameInput);
+    row.appendChild(removeBtn);
+    container.appendChild(row);
+  });
 }

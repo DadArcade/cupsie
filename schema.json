@@ -32,6 +32,10 @@
       "minimum": 1,
       "maximum": 1440,
       "description": "Background sync interval in minutes."
+    },
+    "defaultRequestingUser": {
+      "type": "string",
+      "description": "Optional default requesting-user-name override for IPP print requests."
     }
   }
 }

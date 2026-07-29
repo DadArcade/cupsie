@@ -156,6 +156,93 @@ async function clearDeviceAuthRequired(url) {
   }
 }
 
+async function updatePrinterUrlInStorage(oldUrl, newUrl) {
+  try {
+    // 1. Update in chrome.storage.sync
+    const syncRes = await chrome.storage.sync.get(['ippPrinters']);
+    if (syncRes && syncRes.ippPrinters) {
+      let updated = false;
+      const updatedIppPrinters = syncRes.ippPrinters.map(p => {
+        const norm = normalizeIppPrinter(p);
+        if (norm && norm.url === oldUrl) {
+          updated = true;
+          if (typeof p === 'string') {
+            return newUrl;
+          } else {
+            return { ...p, url: newUrl };
+          }
+        }
+        return p;
+      });
+      if (updated) {
+        await chrome.storage.sync.set({ ippPrinters: updatedIppPrinters });
+        console.log(`Updated printer URL in storage.sync: ${oldUrl} -> ${newUrl}`);
+      }
+    }
+
+    // 2. Update credentials in chrome.storage.local
+    const localRes = await chrome.storage.local.get(['deviceCredentials']);
+    if (localRes && localRes.deviceCredentials) {
+      const credentials = localRes.deviceCredentials;
+      if (credentials[oldUrl]) {
+        credentials[newUrl] = credentials[oldUrl];
+        delete credentials[oldUrl];
+        await chrome.storage.local.set({ deviceCredentials: credentials });
+        console.log(`Migrated credentials from ${oldUrl} to ${newUrl}`);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to update printer URL in storage:', e);
+  }
+}
+
+function waitForAuthResolution(printerId) {
+  return new Promise((resolve) => {
+    const checkStorageChange = async (changes, namespace) => {
+      if (namespace !== 'local') return;
+      if (changes.authRequiredDevices) {
+        const newDevices = changes.authRequiredDevices.newValue || {};
+        if (newDevices[printerId] === undefined) {
+          cleanup();
+          resolve(true);
+        }
+      }
+    };
+
+    const checkWindowClose = (windowId) => {
+      chrome.storage.local.get(['loginWindowId'], (result) => {
+        if (result.loginWindowId === windowId || !result.loginWindowId) {
+          setTimeout(async () => {
+            const storage = await chrome.storage.local.get(['authRequiredDevices']);
+            const devices = storage.authRequiredDevices || {};
+            if (devices[printerId] === undefined) {
+              cleanup();
+              resolve(true);
+            } else {
+              cleanup();
+              resolve(false);
+            }
+          }, 200);
+        }
+      });
+    };
+
+    const cleanup = () => {
+      chrome.storage.onChanged.removeListener(checkStorageChange);
+      chrome.windows.onRemoved.removeListener(checkWindowClose);
+    };
+
+    chrome.storage.onChanged.addListener(checkStorageChange);
+    chrome.windows.onRemoved.addListener(checkWindowClose);
+
+    // Safety timeout: 2 minutes
+    setTimeout(() => {
+      cleanup();
+      resolve(false);
+    }, 120000);
+  });
+}
+
 async function checkAndPromptAuth() {
   try {
     const storage = await chrome.storage.local.get(['authRequiredDevices', 'loginWindowId']);
@@ -243,16 +330,32 @@ async function updateAlarm() {
 
 async function getUsername() {
   try {
-    if (chrome.identity && typeof chrome.identity.getProfileUserInfo === 'function') {
-      const userInfo = await chrome.identity.getProfileUserInfo();
-      if (userInfo && userInfo.email) {
-        return userInfo.email.split('@')[0];
+    const storage = await chrome.storage.sync.get(['defaultRequestingUser']);
+    if (storage && storage.defaultRequestingUser) {
+      const trimmed = storage.defaultRequestingUser.trim();
+      if (trimmed) {
+        return trimmed;
       }
     }
   } catch (e) {
-    console.warn('Failed to retrieve user profile info:', e);
+    console.warn('Failed to read defaultRequestingUser from storage.sync:', e);
   }
-  return null;
+
+  try {
+    if (chrome.storage && chrome.storage.managed) {
+      const managed = await chrome.storage.managed.get(['defaultRequestingUser']);
+      if (managed && managed.defaultRequestingUser) {
+        const trimmed = managed.defaultRequestingUser.trim();
+        if (trimmed) {
+          return trimmed;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to read defaultRequestingUser from storage.managed:', e);
+  }
+
+  return 'Chrome User';
 }
 
 function isUserAllowed(username, allowedList, deniedList) {
@@ -369,13 +472,17 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 // Storage Change Listener - re-sync only when configuration keys change
-const CONFIG_KEYS = new Set(['cupsServers', 'ippPrinters', 'syncInterval']);
+const CONFIG_KEYS = new Set(['cupsServers', 'ippPrinters', 'syncInterval', 'defaultRequestingUser']);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== 'sync' && areaName !== 'managed') return;
 
   if (changes.syncInterval) {
     updateAlarm().catch(e => console.error('Failed to update sync alarm after config change:', e));
+  }
+
+  if (changes.defaultRequestingUser) {
+    chrome.storage.local.remove(['capabilitiesCache']).catch(e => console.warn('Failed to clear capabilities cache after username change:', e));
   }
 
   // Only re-sync if a config key was the thing that actually changed.
@@ -584,83 +691,167 @@ async function syncPrinters(onProgress, isInteractive = false) {
     const printerTask = async (printer) => {
       console.group(`[IPP]  → ${printer.url}`);
       try {
-        const printerHost = getHostname(printer.url);
-        const targetName = printer.name ? `${printer.name} (${printerHost})` : printerHost;
-        console.log(`  Sending Get-Printer-Attributes to ${targetName} …`);
-        let currentVersion = 0x0200;
-        let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 2, toIppScheme(printer.url), false, 'Print Job', null, 'Chrome User', currentVersion);
+        const originalUrl = printer.url;
+        const cleanUrl = originalUrl.trim().replace(/\/+$/, '');
+        const endsWithIpp = cleanUrl.endsWith('/ipp') || cleanUrl.endsWith('/ipp/print') || cleanUrl.endsWith('/printer');
         
-        const performFetch = async (reqBuf) => {
-          const res = await fetchWithAuth(printer.url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/ipp' },
-            body: new Blob([reqBuf], { type: 'application/ipp' })
-          }, 8000);
-          if (!res.ok && res.status >= 500) {
-            throw new Error(`HTTP ${res.status}`);
-          }
-          return res;
-        };
-
-        let response = await retry(() => performFetch(requestBuffer), [], { retries: 3, delay: 1000, url: printer.url });
-
-        console.log(`  HTTP response from ${printerHost}: ${response.status} ${response.statusText}`);
-
-        if (response.ok) {
-          await clearDeviceAuthRequired(printer.url);
-          const contentType = response.headers.get('Content-Type') || '';
-          if (contentType && !contentType.includes('application/ipp')) {
-            console.warn(`  ✖ Non-IPP response from standalone printer: ${contentType}`);
-            syncResults[printer.url] = { status: 'error', message: chrome.i18n.getMessage('sync_error_non_ipp') };
-            return;
-          }
-          let responseBuffer = await response.arrayBuffer();
-          let parsed = parseIppResponse(responseBuffer);
-
-          console.log(`  IPP status code: 0x${parsed.statusCode.toString(16).padStart(4, '0')}`);
-
-          if (parsed.statusCode === 0x0503) { // server-error-version-not-supported
-            console.log(`  IPP version 2.0 not supported. Retrying with IPP 1.1 …`);
-            currentVersion = 0x0101;
-            requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 2, toIppScheme(printer.url), false, 'Print Job', null, 'Chrome User', currentVersion);
-            response = await retry(() => performFetch(requestBuffer), [], { retries: 3, delay: 1000, url: printer.url });
-            if (response.ok) {
-              responseBuffer = await response.arrayBuffer();
-              parsed = parseIppResponse(responseBuffer);
-              console.log(`  IPP status code (retry): 0x${parsed.statusCode.toString(16).padStart(4, '0')}`);
-            } else {
-              console.warn(`  ✖ HTTP ${response.status} on IPP 1.1 retry.`);
-              syncResults[printer.url] = { status: 'error', message: chrome.i18n.getMessage('sync_error_http', [response.status]) };
-              return;
-            }
-          }
-
-          const pg = parsed.groups.find(g => g.tag === 4) || { attributes: {} };
-          const allowedList = pg.attributes['requesting-user-name-allowed'];
-          const deniedList = pg.attributes['requesting-user-name-denied'];
-          const name = printer.name || pg.attributes['printer-info']?.[0] || pg.attributes['printer-name']?.[0] || printer.url;
-
-          if (!isUserAllowed(username, allowedList, deniedList)) {
-            console.log(`  Skipping blocked standalone printer "${name}" for user "${username}"`);
-            syncResults[printer.url] = { status: 'success', message: chrome.i18n.getMessage('sync_skipped_unauthorized') };
-            return;
-          }
-
-          const info = pg.attributes['printer-info']?.[0] || '';
-          const location = pg.attributes['printer-location']?.[0] || '';
-          const desc = info && location ? `${info} (${location})` : (info || location || '(no description)');
-          const state = pg.attributes['printer-state']?.[0];
-          console.log(`  ✔ Printer: "${name}"  desc="${desc}"${state !== undefined ? `  state=${state}` : ''}`);
-
-          newPrinters.push({ id: printer.url, name, description: desc, ippVersion: parsed.version || currentVersion });
-          syncResults[printer.url] = { status: 'success', message: chrome.i18n.getMessage('sync_success_discovered', [name]) };
-        } else {
-          console.warn(`  ✖ HTTP ${response.status} — printer rejected the request.`);
-          if (response.status === 401) {
-            await markDeviceAuthRequired(printer.url, 'ipp', printer.name);
-          }
-          syncResults[printer.url] = { status: 'error', message: chrome.i18n.getMessage('sync_error_http', [response.status]) };
+        const candidateUrls = [originalUrl];
+        if (!endsWithIpp) {
+          candidateUrls.push(cleanUrl + '/ipp');
+          candidateUrls.push(cleanUrl + '/ipp/print');
         }
+
+        let successUrl = null;
+        let finalResponse = null;
+        let finalIppVersion = 0x0200;
+        let finalParsed = null;
+        let lastError = null;
+
+        for (let i = 0; i < candidateUrls.length; i++) {
+          const testUrl = candidateUrls[i];
+          const printerHost = getHostname(testUrl);
+          const targetName = printer.name ? `${printer.name} (${printerHost})` : printerHost;
+          console.log(`  [Candidate ${i+1}/${candidateUrls.length}] Trying URL: ${testUrl}`);
+          
+          try {
+            let currentVersion = 0x0200;
+            let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 2, toIppScheme(testUrl), false, 'Print Job', null, username || 'Chrome User', currentVersion);
+            
+            const performFetch = async (reqBuf) => {
+              const res = await fetchWithAuth(testUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/ipp' },
+                body: new Blob([reqBuf], { type: 'application/ipp' })
+              }, 8000);
+              if (!res.ok && res.status >= 500) {
+                throw new Error(`HTTP ${res.status}`);
+              }
+              return res;
+            };
+
+            let response = await retry(() => performFetch(requestBuffer), [], { retries: 3, delay: 1000, url: testUrl });
+            console.log(`  HTTP response from ${printerHost}: ${response.status} ${response.statusText}`);
+
+            if (response.ok) {
+              const contentType = response.headers.get('Content-Type') || '';
+              if (contentType && !contentType.includes('application/ipp')) {
+                console.warn(`  ✖ Non-IPP response from standalone printer at ${testUrl}: ${contentType}`);
+                throw new Error(chrome.i18n.getMessage('sync_error_non_ipp') || 'Non-IPP response');
+              }
+              
+              // Check credentials if they are stored for this printer
+              let isAuthorized = true;
+              try {
+                const storage = await chrome.storage.local.get(['deviceCredentials']);
+                const credentials = storage.deviceCredentials || {};
+                const creds = credentials[testUrl] || credentials[originalUrl];
+                if (creds) {
+                  console.log(`  Verifying credentials for ${testUrl} using Validate-Job …`);
+                  const validateBuffer = buildIppRequest(IPP_OPS.Validate_Job, 10, toIppScheme(testUrl), true, 'Verify Job', null, username || 'Chrome User', currentVersion);
+                  const valRes = await performFetch(validateBuffer);
+                  if (!valRes.ok && (valRes.status === 401 || valRes.status === 403)) {
+                    console.warn(`  ✖ Credentials validation failed with HTTP status: ${valRes.status}`);
+                    isAuthorized = false;
+                  }
+                }
+              } catch (e) {
+                console.warn('  ✖ Validation request failed:', e.message);
+              }
+
+              if (!isAuthorized) {
+                await markDeviceAuthRequired(testUrl, 'ipp', printer.name);
+                successUrl = testUrl;
+                finalResponse = response;
+                finalIppVersion = currentVersion;
+                lastError = { type: 'auth_failed', message: chrome.i18n.getMessage('loginErrorAuthFailed') || 'Authentication failed. Please verify credentials.' };
+                break;
+              }
+
+              let responseBuffer = await response.arrayBuffer();
+              let parsed = parseIppResponse(responseBuffer);
+              console.log(`  IPP status code: 0x${parsed.statusCode.toString(16).padStart(4, '0')}`);
+
+              if (parsed.statusCode === 0x0503) { // server-error-version-not-supported
+                console.log(`  IPP version 2.0 not supported. Retrying with IPP 1.1 …`);
+                currentVersion = 0x0101;
+                requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 2, toIppScheme(testUrl), false, 'Print Job', null, username || 'Chrome User', currentVersion);
+                response = await retry(() => performFetch(requestBuffer), [], { retries: 3, delay: 1000, url: testUrl });
+                if (response.ok) {
+                  responseBuffer = await response.arrayBuffer();
+                  parsed = parseIppResponse(responseBuffer);
+                  console.log(`  IPP status code (retry): 0x${parsed.statusCode.toString(16).padStart(4, '0')}`);
+                } else {
+                  console.warn(`  ✖ HTTP ${response.status} on IPP 1.1 retry.`);
+                  throw new Error(chrome.i18n.getMessage('sync_error_http', [response.status]) || `HTTP ${response.status}`);
+                }
+              }
+
+              successUrl = testUrl;
+              finalResponse = response;
+              finalIppVersion = parsed.version || currentVersion;
+              finalParsed = parsed;
+              break; // Succeeded!
+            } else {
+              console.warn(`  ✖ HTTP ${response.status} — printer rejected the request.`);
+              if (response.status === 401 || response.status === 403) {
+                successUrl = testUrl;
+                finalResponse = response;
+                finalIppVersion = currentVersion;
+                lastError = { type: '401', status: response.status };
+                break;
+              } else {
+                throw new Error(chrome.i18n.getMessage('sync_error_http', [response.status]) || `HTTP ${response.status}`);
+              }
+            }
+          } catch (e) {
+            console.error(`  ✖ Failed with ${testUrl}: ${e.message}`);
+            lastError = e;
+          }
+        }
+
+        if (!successUrl) {
+          console.warn(`  ✖ All candidate URLs failed for printer.`);
+          const msg = lastError ? (lastError.message || lastError.toString()) : (chrome.i18n.getMessage('errConnectionFailed') || 'Connection failed');
+          syncResults[originalUrl] = { status: 'error', message: msg };
+          return;
+        }
+
+        if (successUrl !== originalUrl) {
+          console.log(`  ✔ Succeeded using fallback URL: ${successUrl}. Saving to storage...`);
+          await updatePrinterUrlInStorage(originalUrl, successUrl);
+        }
+
+        if (lastError && (lastError.type === 'auth_failed' || lastError.type === '401' || lastError.type === '403')) {
+          if (lastError.type === 'auth_failed') {
+            syncResults[successUrl] = { status: 'error', message: lastError.message };
+          } else {
+            await markDeviceAuthRequired(successUrl, 'ipp', printer.name);
+            syncResults[successUrl] = { status: 'error', message: chrome.i18n.getMessage('sync_error_http', [lastError.status]) };
+          }
+          return;
+        }
+
+        await clearDeviceAuthRequired(successUrl);
+
+        const pg = finalParsed.groups.find(g => g.tag === 4) || { attributes: {} };
+        const allowedList = pg.attributes['requesting-user-name-allowed'];
+        const deniedList = pg.attributes['requesting-user-name-denied'];
+        const name = printer.name || pg.attributes['printer-info']?.[0] || pg.attributes['printer-name']?.[0] || successUrl;
+
+        if (!isUserAllowed(username, allowedList, deniedList)) {
+          console.log(`  Skipping blocked standalone printer "${name}" for user "${username}"`);
+          syncResults[successUrl] = { status: 'success', message: chrome.i18n.getMessage('sync_skipped_unauthorized') };
+          return;
+        }
+
+        const info = pg.attributes['printer-info']?.[0] || '';
+        const location = pg.attributes['printer-location']?.[0] || '';
+        const desc = info && location ? `${info} (${location})` : (info || location || '(no description)');
+        const state = pg.attributes['printer-state']?.[0];
+        console.log(`  ✔ Printer: "${name}"  desc="${desc}"${state !== undefined ? `  state=${state}` : ''}`);
+
+        newPrinters.push({ id: successUrl, name, description: desc, ippVersion: finalIppVersion });
+        syncResults[successUrl] = { status: 'success', message: chrome.i18n.getMessage('sync_success_discovered', [name]) };
       } catch (e) {
         console.error(`  ✖ Network error: ${e.message}`);
         syncResults[printer.url] = { status: 'error', message: e.message || chrome.i18n.getMessage('errConnectionFailed') };
@@ -782,7 +973,7 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
 
     try {
       let currentVersion = 0x0200;
-      let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 3, toIppScheme(printerId), false, 'Print Job', null, 'Chrome User', currentVersion);
+      let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 3, toIppScheme(printerId), false, 'Print Job', null, username || 'Chrome User', currentVersion);
       const performFetch = async (reqBuf) => {
         const res = await fetchWithAuth(printerId, {
           method: 'POST',
@@ -801,6 +992,19 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
       if (response.status === 401) {
         await markDeviceAuthRequired(printerId, 'ipp');
         checkAndPromptAuth();
+        const authorized = await waitForAuthResolution(printerId);
+        if (authorized) {
+          console.log(`User authorized device ${printerId}, retrying capabilities request...`);
+          try {
+            response = await retry(() => performFetch(requestBuffer), [], { retries: 3, delay: 1000, url: printerId });
+            isSuccess = response.ok;
+          } catch (e) {
+            console.error('Error retrying capabilities request after auth:', e);
+            isSuccess = false;
+          }
+        } else {
+          isSuccess = false;
+        }
       }
 
       if (isSuccess) {
@@ -819,7 +1023,7 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
         if (parsed.statusCode === 0x0503) { // server-error-version-not-supported
           console.log(`  IPP version 2.0 not supported for capabilities of ${printerId}. Retrying with IPP 1.1 …`);
           currentVersion = 0x0101;
-          requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 3, toIppScheme(printerId), false, 'Print Job', null, 'Chrome User', currentVersion);
+          requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 3, toIppScheme(printerId), false, 'Print Job', null, username || 'Chrome User', currentVersion);
           response = await retry(() => performFetch(requestBuffer), [], { retries: 3, delay: 1000, url: printerId });
           if (response.ok) {
             responseBuffer = await response.arrayBuffer();
@@ -1035,7 +1239,41 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
       if (response.status === 401 || response.status === 403) {
         await markDeviceAuthRequired(printJob.printerId, 'ipp');
         checkAndPromptAuth();
-        reason = chrome.i18n.getMessage('errHttpUnauthorized');
+        
+        // Wait for user to input credentials
+        const authorized = await waitForAuthResolution(printJob.printerId);
+        if (authorized) {
+          console.log(`User authorized device ${printJob.printerId}, retrying print job...`);
+          try {
+            const retryResponse = await retry(submitPrintJob, [], { retries: 2, delay: 1500, url: printJob.printerId });
+            if (retryResponse.ok) {
+              const responseBuffer = await retryResponse.arrayBuffer();
+              const parsed = parseIppResponse(responseBuffer);
+              if (parsed.statusCode >= 0x0000 && parsed.statusCode <= 0x00FF) {
+                console.log(`Print job dispatched successfully on retry: ${printJob.title}`);
+                callback('OK');
+                return;
+              } else {
+                console.warn(`Print Job retry accepted by server but returned warning status: ${parsed.statusCode}`);
+                const msgKey = IPP_STATUS_MESSAGES[parsed.statusCode];
+                const retryReason = msgKey ? chrome.i18n.getMessage(msgKey) : chrome.i18n.getMessage('ipp_error_unknown', [`0x${parsed.statusCode.toString(16).padStart(4, '0')}`]);
+                showPrintFailureNotification(printJob.title, retryReason);
+                callback('FAILED');
+                return;
+              }
+            } else {
+              console.warn(`Print job retry failed with HTTP status: ${retryResponse.status}`);
+              reason = chrome.i18n.getMessage('sync_error_http', [retryResponse.status]);
+            }
+          } catch (e) {
+            console.error('Error securely sending print job on retry:', e);
+            showPrintFailureNotification(printJob.title, e.message || chrome.i18n.getMessage('errConnectionFailed'));
+            callback('FAILED');
+            return;
+          }
+        } else {
+          reason = chrome.i18n.getMessage('errHttpUnauthorized');
+        }
       } else if (response.status === 407) {
         reason = chrome.i18n.getMessage('errHttpProxyAuth');
       } else if (response.status === 502 || response.status === 504) {

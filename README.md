@@ -52,6 +52,7 @@ Enterprise IT administrators can deploy and enforce printer configurations acros
 | `cupsServers` | Array of Strings | Enterprise CUPS print server URLs/IPs (e.g., `["http://cups.domain.local:631"]`). |
 | `ippPrinters` | Array of Objects | Direct IPP printers with `url` (string) and optional `name` (string). |
 | `syncInterval` | Integer | Background sync interval in minutes (1–1440). |
+| `defaultRequestingUser` | String | Optional default requesting-user-name override for IPP print requests. |
 
 ### Deploying via Google Admin Console
 
@@ -81,6 +82,9 @@ Enterprise IT administrators can deploy and enforce printer configurations acros
   },
   "syncInterval": {
     "Value": 1440
+  },
+  "defaultRequestingUser": {
+    "Value": "employee"
   }
 }
 ```
@@ -116,7 +120,8 @@ For Linux managed workstations, save a policy file to `/etc/opt/chrome/policies/
             "name": "HQ 2nd Floor Copier"
           }
         ],
-        "syncInterval": 1440
+        "syncInterval": 1440,
+        "defaultRequestingUser": "employee"
       }
     }
   }

@@ -2,6 +2,7 @@
 <html>
 
 <head>
+  <meta charset="utf-8">
   <title data-i18n="optionsPageTitle">Printer Provider Options</title>
   <link rel="stylesheet" href="fonts/fonts.css">
   <style>
@@ -109,6 +110,28 @@
       color: var(--text-muted);
     }
 
+    .text-input {
+      background-color: #fdfcff;
+      color: var(--text);
+      border: 1px solid var(--outline);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      transition: all 0.2s;
+      box-sizing: border-box;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border: 2px solid var(--primary);
+      padding: 9px 11px;
+    }
+
+    .text-input:disabled {
+      background-color: var(--bg);
+      color: var(--text-muted);
+    }
+
     button {
       font-family: 'Roboto', sans-serif;
       font-weight: 500;
@@ -209,7 +232,8 @@
       flex: 1;
     }
 
-    .printer-row .remove-btn {
+    .printer-row .remove-btn,
+    .credentials-row .remove-btn {
       background-color: transparent;
       color: var(--error);
       border: 1px solid var(--border);
@@ -226,7 +250,8 @@
       height: 38px;
     }
 
-    .printer-row .remove-btn:hover {
+    .printer-row .remove-btn:hover,
+    .credentials-row .remove-btn:hover {
       background-color: var(--error-container);
       color: var(--on-error-container);
       border-color: transparent;
@@ -256,6 +281,31 @@
     }
 
     .printer-row-managed .managed-name {
+      flex: 1;
+    }
+
+    .credentials-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .credentials-row input[type="text"] {
+      background-color: var(--bg);
+      color: var(--text-muted);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    .credentials-row .credential-url {
+      flex: 2;
+    }
+
+    .credentials-row .credential-username {
       flex: 1;
     }
 
@@ -309,6 +359,21 @@
       style="background-color: var(--primary-container); color: var(--on-primary-container); padding: 8px 16px; font-size: 13px; border-radius: 8px; box-shadow: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; border: none; cursor: pointer; transition: all 0.2s;">
       <span style="font-size: 16px; font-weight: bold;">+</span> Add Printer
     </button>
+  </div>
+
+  <div class="section" id="credentialsSection">
+    <label data-i18n="storedCredentialsLabel">Stored Credentials</label>
+    <p class="note" data-i18n="storedCredentialsNote">Saved credentials for printers and CUPS servers requiring authentication.</p>
+    <div id="credentialsContainer"></div>
+  </div>
+
+  <div class="section">
+    <label for="defaultRequestingUser">
+      <span data-i18n="defaultRequestingUserLabel">Default Requesting Username</span>
+      <span id="managedUserBadge" style="display:none; color:#137333; font-weight:bold; font-size:12px; margin-left:10px;" data-i18n="managedByPolicyBadge">(Managed by Policy)</span>
+    </label>
+    <p class="note" data-i18n="defaultRequestingUserNote">The username passed to printers that do not require authentication. If left blank, the logged-in user profile name will be used.</p>
+    <input type="text" id="defaultRequestingUser" class="text-input" style="width: 250px;" data-i18n-placeholder="defaultRequestingUserPlaceholder" placeholder="e.g., john.doe">
   </div>
 
   <div class="section">

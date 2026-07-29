@@ -6,6 +6,7 @@ export const IPP_VERSION_2_0 = 0x0200;
 
 export const IPP_OPS = {
   Print_Job: 0x0002,
+  Validate_Job: 0x000A,
   Get_Printer_Attributes: 0x000B,
   CUPS_Get_Printers: 0x4002
 };

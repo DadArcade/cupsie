@@ -63,6 +63,18 @@
     "message": "How often the extension checks the network for new printers. Minimum 1 minute.",
     "description": "Instruction note for background sync interval."
   },
+  "defaultRequestingUserLabel": {
+    "message": "Default Requesting Username",
+    "description": "Label for default requesting username input."
+  },
+  "defaultRequestingUserNote": {
+    "message": "The username passed to printers that do not require authentication. If left blank, the default 'Chrome User' will be used.",
+    "description": "Explanatory note for default requesting username input."
+  },
+  "defaultRequestingUserPlaceholder": {
+    "message": "e.g., john.doe",
+    "description": "Placeholder for default requesting username input."
+  },
   "syncIntervalInvalid": {
     "message": "Background sync interval must be between 1 and 1440 minutes.",
     "description": "Error message shown when the sync interval is out of bounds."
@@ -660,5 +672,41 @@
   "loginIgnoreCheckbox": {
     "message": "Don't ask again (skip this printer/server)",
     "description": "Label for the ignore/skip checkbox on the login dialog."
+  },
+  "loginNoAuthRequired": {
+    "message": "No authentication required at this time.",
+    "description": "Status message shown if no authentication is required."
+  },
+  "loginErrorSaveFailed": {
+    "message": "Failed to save settings.",
+    "description": "Error message when saving credentials fails."
+  },
+  "loginErrorCommError": {
+    "message": "Communication error with background page.",
+    "description": "Error message when communication with the background script fails."
+  },
+  "loginSuccessVerified": {
+    "message": "All connections verified successfully!",
+    "description": "Status message shown when all connection credentials have been verified."
+  },
+  "loginErrorVerificationFailed": {
+    "message": "Verification failed.",
+    "description": "Error message when verification fails due to internal errors."
+  },
+  "storedCredentialsLabel": {
+    "message": "Stored Credentials",
+    "description": "Label for the stored credentials section."
+  },
+  "storedCredentialsNote": {
+    "message": "Saved credentials for printers and CUPS servers requiring authentication.",
+    "description": "Explanatory note for the stored credentials section."
+  },
+  "noStoredCredentials": {
+    "message": "No stored credentials found.",
+    "description": "Message shown when there are no stored credentials."
+  },
+  "removeCredentialTitle": {
+    "message": "Remove credential",
+    "description": "Tooltip for the remove button of a stored credential."
   }
 }

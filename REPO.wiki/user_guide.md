@@ -58,7 +58,7 @@ If you have a printer connected directly to your network without a print server:
    * **URL**: The direct IPP or HTTP printer endpoint address.
      * *Example:* `ipp://192.168.1.50:631/ipp/print` or `http://10.0.1.25/ipp/print`
    * **Name** (Optional): A friendly nickname for the printer (e.g., `Office Color Laser`).
-3. You can add multiple standalone printers by clicking **+ Add Printer** and adding more lines.
+3. You can add multiple standalone printers by clicking **+ Add Another Printer** and adding more lines.
 
 <details>
 <summary><b>Customizing the Sync Interval</b></summary>

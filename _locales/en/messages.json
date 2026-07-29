@@ -51,6 +51,10 @@
     "message": "Enter direct HTTP/HTTPS or IPP/IPPS endpoint URLs and optional display names for your standalone printers (e.g., ipp://192.168.1.50:631/ipp/print or http://192.168.1.50:631/ipp/print).",
     "description": "Instructions for custom IPP printers."
   },
+  "addIppPrinterButton": {
+    "message": "Add Another Printer",
+    "description": "Button to add a new user-defined IPP printer row."
+  },
   "syncIntervalLabel": {
     "message": "Background Sync Interval (minutes)",
     "description": "Label for sync interval selection."

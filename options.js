@@ -314,6 +314,10 @@ async function restoreUserAndLocalOptions(managed) {
       });
     }
   } else {
+    const container = document.getElementById('ippPrintersContainer');
+    if (container) {
+      container.innerHTML = '';
+    }
     addPrinterRow('', '');
   }
   // Apply local interval value only if it's not managed by enterprise policy

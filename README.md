@@ -29,11 +29,11 @@ Open the extension **Options** page (right-click the extension icon and select *
 - The extension automatically connects to each server and fetches all available printer queues.
 
 ### 2. Adding Standalone IPP Printers
-- Under **Standalone IPP Printers**, click **+ Add Printer**.
-- Enter the direct IPP URL endpoint and an optional friendly display name.
+- Under **Standalone IPP Printers**,enter the direct IPP URL endpoint and an optional friendly display name.
 - *Example*:
   - **URL**: `http://192.168.1.50:631/ipp/print` or `https://cups-server.example.com/ipp/print`
   - **Name**: `Office Color Laser`
+- Click **+ Add Another Printer** to add more printers if needed.
 
 ### 3. Background Sync Interval
 - Adjust the **Background Sync Interval (minutes)** to control how frequently Cupsie polls your servers and printers for state changes.

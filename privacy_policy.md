@@ -15,15 +15,15 @@ The Extension only accesses the minimum necessary information required to perfor
 ### A. Network Printer Information
 - **What is accessed**: Printer connection URLs and IP addresses configured manually by you or distributed via enterprise policy.
 - **Purpose**: The Extension connects directly to these network URLs (using standard IPP or CUPS protocols) to query printer capabilities and transmit print jobs.
-- **Processing**: Print jobs and printer status queries travel directly from your local browser to the target printer endpoints. We do not inspect, intercept, or log the contents of your printed documents.
+- **Processing**: Print jobs and printer status queries travel directly from your local computer to the target printer endpoints. We do not inspect, intercept, or log the contents of your printed documents.
 
 ---
 
 ## 2. Data Storage and Location
 
 All data managed by the Extension is stored locally in your Chrome browser's secure sandboxed storage:
-- **`chrome.storage.sync`**: User-defined CUPS servers, standalone IPP printers, and synchronization intervals may be synchronized across your signed-in Chrome devices.
-- **`chrome.storage.local`**: Troubleshooting logs and local cached printer capabilities.
+- **`chrome.storage.sync`**: User-defined CUPS servers, standalone IPP printers,  synchronization intervals, and user name may be synchronized across your signed-in Chrome devices.
+- **`chrome.storage.local`**: Saved username/password pairs for CUPS authentication, troubleshooting logs and local cached printer capabilities.
 
 No personal data, document content, or configuration information is sent to the Extension developers.
 

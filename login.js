@@ -145,39 +145,50 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Trigger sync in background page to verify the new credentials
-    chrome.runtime.sendMessage({ action: 'sync_printers' }, async (response) => {
+    // Trigger sync in background page to verify the new credentials.
+    // sendMessage returns a promise (MV3) — the background awaits the full
+    // sync before calling sendResponse, so the response only arrives once
+    // all printer/server probes have finished.
+    let syncResponse;
+    try {
+      syncResponse = await chrome.runtime.sendMessage({ action: 'sync_printers' });
+    } catch (e) {
+      console.error('Runtime message error:', e);
+      showError(chrome.i18n.getMessage('loginErrorCommError') || 'Communication error with background page.');
       saveBtn.disabled = false;
       cancelBtn.disabled = false;
+      return;
+    }
 
-      if (chrome.runtime.lastError) {
-        console.error('Runtime message error:', chrome.runtime.lastError);
-        showError(chrome.i18n.getMessage('loginErrorCommError') || 'Communication error with background page.');
-        return;
-      }
+    saveBtn.disabled = false;
+    cancelBtn.disabled = false;
 
-      // Read authRequiredDevices again to check if credentials worked
-      try {
-        const storage = await chrome.storage.local.get(['authRequiredDevices']);
-        const currentAuthRequired = storage.authRequiredDevices || {};
-        
-        // Check if any of the devices we just saved credentials for are STILL marked as requiring authentication
-        const stillFailing = deviceUrls.some(url => currentAuthRequired[url] !== undefined);
-        
-        if (stillFailing) {
-          showError(chrome.i18n.getMessage('loginErrorAuthFailed') || 'Authentication failed. Please verify credentials.');
-        } else {
-          statusMessage.textContent = chrome.i18n.getMessage('loginSuccessVerified') || 'All connections verified successfully!';
-          statusMessage.className = 'status success';
-          setTimeout(() => {
-            window.close();
-          }, 1500);
-        }
-      } catch (e) {
-        console.error('Failed to verify sync results:', e);
-        showError(chrome.i18n.getMessage('loginErrorVerificationFailed') || 'Verification failed.');
+    if (syncResponse && syncResponse.status === 'error') {
+      showError(syncResponse.error || chrome.i18n.getMessage('loginErrorVerificationFailed') || 'Verification failed.');
+      return;
+    }
+
+    // Read authRequiredDevices again to check if credentials worked
+    try {
+      const storage = await chrome.storage.local.get(['authRequiredDevices']);
+      const currentAuthRequired = storage.authRequiredDevices || {};
+
+      // Check if any of the devices we just saved credentials for are STILL marked as requiring authentication
+      const stillFailing = deviceUrls.some(url => currentAuthRequired[url] !== undefined);
+
+      if (stillFailing) {
+        showError(chrome.i18n.getMessage('loginErrorAuthFailed') || 'Authentication failed. Please verify credentials.');
+      } else {
+        statusMessage.textContent = chrome.i18n.getMessage('loginSuccessVerified') || 'All connections verified successfully!';
+        statusMessage.className = 'status success';
+        setTimeout(() => {
+          window.close();
+        }, 1500);
       }
-    });
+    } catch (e) {
+      console.error('Failed to verify sync results:', e);
+      showError(chrome.i18n.getMessage('loginErrorVerificationFailed') || 'Verification failed.');
+    }
   });
 
   function showError(msg) {

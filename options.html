@@ -167,6 +167,25 @@
       text-align: center;
     }
 
+    .status.visible {
+      display: block;
+    }
+
+    .status--error {
+      background-color: var(--error-container);
+      color: var(--error);
+    }
+
+    .status--success {
+      background-color: var(--success-container);
+      color: var(--success);
+    }
+
+    .status--info {
+      background-color: var(--primary-container);
+      color: var(--primary);
+    }
+
     .note {
       font-size: 13px;
       color: var(--text-muted);
@@ -321,21 +340,147 @@
       color: #d97706;
       border: 1px solid rgba(245, 158, 11, 0.3);
     }
+
+    .warning-banner.visible {
+      display: block;
+    }
+
+    .managed-section {
+      margin-bottom: 15px;
+      display: none;
+    }
+
+    .managed-section.visible {
+      display: block;
+    }
+
+    .managed-label {
+      color: var(--text-muted);
+    }
+
+    .managed-textarea {
+      height: 60px;
+    }
+
+    .managed-container {
+      margin-bottom: 10px;
+    }
+
+    .printer-container {
+      margin-bottom: 12px;
+    }
+
+    .add-printer-btn {
+      background-color: var(--primary-container);
+      color: var(--on-primary-container);
+      padding: 8px 16px;
+      font-size: 13px;
+      border-radius: 8px;
+      box-shadow: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .add-printer-btn:hover {
+      box-shadow: none;
+      transform: none;
+      opacity: 0.85;
+    }
+
+    .add-printer-btn .icon {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .managed-badge {
+      display: none;
+      color: var(--success);
+      font-weight: 500;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    .managed-badge.visible {
+      display: inline;
+    }
+
+    .input--wide {
+      width: 250px;
+    }
+
+    .note--intro {
+      margin-bottom: 20px;
+    }
+
+    .note--sync-time {
+      margin-top: 10px;
+      font-weight: 500;
+      color: var(--primary);
+    }
+
+    .note--logs {
+      margin-top: 5px;
+    }
+
+    .sync-divider {
+      margin-top: 15px;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    .sync-results-header {
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .sync-log {
+      list-style-type: none;
+      padding-left: 0;
+      font-size: 13px;
+      max-height: 150px;
+      overflow-y: auto;
+      margin: 0;
+    }
+
+    .sync-result {
+      margin-bottom: 5px;
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .sync-result--success {
+      background-color: var(--success-container);
+      border: 1px solid #ceead6;
+    }
+
+    .sync-result--error {
+      background-color: var(--error-container);
+      border: 1px solid #fad2cf;
+    }
+
+    .sync-result__message--success {
+      color: var(--success);
+    }
+
+    .sync-result__message--error {
+      color: var(--error);
+    }
   </style>
 </head>
 
 <body>
   <h1 data-i18n="optionsPageHeader">Printer Provider Configuration</h1>
 
-  <p class="note" style="margin-bottom: 20px;" data-i18n="managedPoliciesNote">
+  <p class="note note--intro" data-i18n="managedPoliciesNote">
     Enterprise managed policies are force-added alongside your custom configuration.
   </p>
 
   <div class="section">
-    <div id="managedCupsSection" style="margin-bottom: 15px; display: none;">
-      <label style="color: #5f6368;" data-i18n="managedCupsLabel">Enterprise Managed CUPS Servers</label>
-      <textarea id="managedCupsServers" readonly
-        style="background-color: #f1f3f4; color: #5f6368; height: 60px; border: 1px dashed #ccc;"
+    <div id="managedCupsSection" class="managed-section">
+      <label class="managed-label" data-i18n="managedCupsLabel">Enterprise Managed CUPS Servers</label>
+      <textarea id="managedCupsServers" class="managed-textarea" readonly
         data-i18n-placeholder="managedCupsPlaceholder" placeholder="(Managed CUPS servers)"></textarea>
     </div>
 
@@ -346,18 +491,17 @@
   </div>
 
   <div class="section">
-    <div id="managedIppSection" style="margin-bottom: 15px; display: none;">
-      <label style="color: #5f6368;" data-i18n="managedIppLabel">Enterprise Managed Standalone IPP Printers</label>
-      <div id="managedIppPrintersContainer" style="margin-bottom: 10px;"></div>
+    <div id="managedIppSection" class="managed-section">
+      <label class="managed-label" data-i18n="managedIppLabel">Enterprise Managed Standalone IPP Printers</label>
+      <div id="managedIppPrintersContainer" class="managed-container"></div>
     </div>
 
     <label for="ippPrintersContainer" data-i18n="userIppLabel">User Standalone IPP Printers</label>
     <p class="note" data-i18n="userIppNote">Enter direct HTTP/HTTPS or IPP/IPPS endpoint URLs and optional display names for your
       standalone printers (e.g., ipp://192.168.1.50:631/ipp/print or http://192.168.1.50:631/ipp/print).</p>
-    <div id="ippPrintersContainer" style="margin-bottom: 12px;"></div>
-    <button type="button" id="addIppPrinterBtn"
-      style="background-color: var(--primary-container); color: var(--on-primary-container); padding: 8px 16px; font-size: 13px; border-radius: 8px; box-shadow: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; border: none; cursor: pointer; transition: all 0.2s;">
-      <span style="font-size: 16px; font-weight: bold;">+</span> <span data-i18n="addIppPrinterButton">Add Another Printer</span>
+    <div id="ippPrintersContainer" class="printer-container"></div>
+    <button type="button" id="addIppPrinterBtn" class="add-printer-btn">
+      <span class="icon">+</span> <span data-i18n="addIppPrinterButton">Add Another Printer</span>
     </button>
   </div>
 
@@ -370,32 +514,29 @@
   <div class="section">
     <label for="defaultRequestingUser">
       <span data-i18n="defaultRequestingUserLabel">Default Requesting Username</span>
-      <span id="managedUserBadge" style="display:none; color:#137333; font-weight:bold; font-size:12px; margin-left:10px;" data-i18n="managedByPolicyBadge">(Managed by Policy)</span>
+      <span id="managedUserBadge" class="managed-badge" data-i18n="managedByPolicyBadge">(Managed by Policy)</span>
     </label>
     <p class="note" data-i18n="defaultRequestingUserNote">The username passed to printers that do not require authentication. If left blank, the logged-in user profile name will be used.</p>
-    <input type="text" id="defaultRequestingUser" class="text-input" style="width: 250px;" data-i18n-placeholder="defaultRequestingUserPlaceholder" placeholder="e.g., john.doe">
+    <input type="text" id="defaultRequestingUser" class="text-input input--wide" data-i18n-placeholder="defaultRequestingUserPlaceholder" placeholder="e.g., john.doe">
   </div>
 
   <div class="section">
     <label for="syncInterval"><span data-i18n="syncIntervalLabel">Background Sync Interval (minutes)</span> <span
-        id="managedIntervalBadge"
-        style="display:none; color:#137333; font-weight:bold; font-size:12px; margin-left:10px;"
+        id="managedIntervalBadge" class="managed-badge"
         data-i18n="managedByPolicyBadge">(Managed by Policy)</span></label>
     <p class="note" data-i18n="syncIntervalNote">How often the extension checks the network for new printers. Minimum 1
       minute.</p>
-    <input type="number" id="syncInterval" min="1" max="1440" value="1440"
-      style="width: 100px; padding: 5px; margin-bottom: 5px; border: 1px solid #bbb; border-radius: 4px;">
+    <input type="number" id="syncInterval" min="1" max="1440" value="1440">
 
-    <p class="note" style="margin-top: 10px; font-weight: bold; color: #1a73e8;"><span data-i18n="lastSyncLabel">Last
+    <p class="note note--sync-time"><span data-i18n="lastSyncLabel">Last
         Sync:</span> <span id="lastSyncTime" data-i18n="never">Never</span></p>
-    <p class="note" style="margin-top: 5px;"><a href="logs.html" target="_blank"
-        style="color: #6366f1; text-decoration: none; font-weight: 500;" data-i18n="viewLogsLink">View Troubleshooting
+    <p class="note note--logs"><a href="logs.html" target="_blank"
+        data-i18n="viewLogsLink">View Troubleshooting
         Logs &rarr;</a></p>
 
-    <div style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
-      <h3 style="font-size: 14px; margin-bottom: 5px;" data-i18n="syncResultsHeader">Sync Results</h3>
-      <ul id="syncLog"
-        style="list-style-type: none; padding-left: 0; font-size: 13px; max-height: 150px; overflow-y: auto; margin: 0;">
+    <div class="sync-divider">
+      <h3 class="sync-results-header" data-i18n="syncResultsHeader">Sync Results</h3>
+      <ul id="syncLog" class="sync-log">
       </ul>
     </div>
   </div>

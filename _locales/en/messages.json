@@ -55,6 +55,14 @@
     "message": "Add Another Printer",
     "description": "Button to add a new user-defined IPP printer row."
   },
+  "printerNamePlaceholder": {
+    "message": "Name (optional)",
+    "description": "Placeholder for the optional display name input when adding an IPP printer."
+  },
+  "removePrinterTitle": {
+    "message": "Remove printer",
+    "description": "Tooltip for the remove button on an IPP printer row."
+  },
   "syncIntervalLabel": {
     "message": "Background Sync Interval (minutes)",
     "description": "Label for sync interval selection."

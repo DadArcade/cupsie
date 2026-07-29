@@ -1,12 +1,29 @@
 let loadedCredentials = {};
+let statusTimer = null;
+
+function showStatus(messageKey, type = 'success', substitutions = [], duration = 4000) {
+  const status = document.getElementById('status');
+  status.textContent = chrome.i18n.getMessage(messageKey, substitutions) || messageKey;
+  status.className = 'status visible status--' + type;
+  // Re-enable save button on terminal states (success/error), keep disabled during info
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn && type !== 'info') saveBtn.disabled = false;
+  if (statusTimer) clearTimeout(statusTimer);
+  if (duration > 0) {
+    statusTimer = setTimeout(() => {
+      status.classList.remove('visible');
+      statusTimer = null;
+    }, duration);
+  }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   restoreOptions();
   document.getElementById('addIppPrinterBtn').addEventListener('click', () => {
     addPrinterRow('', '');
   });
+  document.getElementById('saveBtn').addEventListener('click', saveOptions);
 });
-document.getElementById('saveBtn').addEventListener('click', saveOptions);
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (changes.lastSyncTime && changes.lastSyncTime.newValue) {
@@ -58,6 +75,7 @@ function getMatchPattern(urlStr) {
 }
 
 function saveOptions() {
+  document.getElementById('saveBtn').disabled = true;
   const cupsServers = document.getElementById('cupsServers').value
                         .split('\n')
                         .map(validateAndFormatUrl)
@@ -81,22 +99,12 @@ function saveOptions() {
   const syncInterval = parseInt(document.getElementById('syncInterval').value, 10);
   const defaultRequestingUser = document.getElementById('defaultRequestingUser').value.trim();
 
-  const status = document.getElementById('status');
   if (isNaN(syncInterval) || syncInterval < 1 || syncInterval > 1440) {
-    status.textContent = chrome.i18n.getMessage('syncIntervalInvalid');
-    status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-    status.style.color = '#f87171';
-    status.style.display = 'block';
-    setTimeout(() => {
-      status.style.display = 'none';
-    }, 4000);
+    showStatus('syncIntervalInvalid', 'error');
     return;
   }
 
-  status.textContent = chrome.i18n.getMessage('savingSettings');
-  status.style.backgroundColor = 'rgba(99, 102, 241, 0.15)';
-  status.style.color = '#a5b4fc';
-  status.style.display = 'block';
+  showStatus('savingSettings', 'info', [], 0);
 
   // Collect unique host patterns we need permission for
   const uniqueOrigins = new Set();
@@ -119,26 +127,21 @@ function saveOptions() {
         console.error('Permission request error:', chrome.runtime.lastError);
       }
       if (!granted) {
-        status.textContent = chrome.i18n.getMessage('permissionsRequired') || 'Connection permissions are required to sync these printers.';
-        status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-        status.style.color = '#f87171';
-        setTimeout(() => {
-          status.style.display = 'none';
-        }, 4000);
+        showStatus('permissionsRequired', 'error');
         return;
       }
       const warningBanner = document.getElementById('permissionsWarning');
-      if (warningBanner) warningBanner.style.display = 'none';
-      saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser, status);
+      if (warningBanner) warningBanner.classList.remove('visible');
+      saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser);
     });
   } else {
     const warningBanner = document.getElementById('permissionsWarning');
-    if (warningBanner) warningBanner.style.display = 'none';
-    saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser, status);
+    if (warningBanner) warningBanner.classList.remove('visible');
+    saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser);
   }
 }
 
-async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser, status) {
+async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser) {
   // Clear auth and ignore tracking flags to re-test connections cleanly on save
   try {
     await chrome.storage.local.remove(['ignoredAuthDevices', 'authRequiredDevices']);
@@ -161,12 +164,7 @@ async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, default
     ]);
   } catch (e) {
     console.error('Failed to save settings:', e);
-    status.textContent = chrome.i18n.getMessage('syncFailed', [e.message || 'Sync failed']);
-    status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-    status.style.color = '#f87171';
-    setTimeout(() => {
-      status.style.display = 'none';
-    }, 4000);
+    showStatus('syncFailed', 'error', [e.message || 'Sync failed']);
     return;
   }
 
@@ -174,24 +172,14 @@ async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, default
   const port = chrome.runtime.connect({ name: 'sync_printers' });
   port.onMessage.addListener((msg) => {
     if (msg.status === 'progress') {
-      status.textContent = chrome.i18n.getMessage('syncProgress', [msg.completed.toString(), msg.total.toString()]);
+      showStatus('syncProgress', 'info', [msg.completed.toString(), msg.total.toString()], 0);
     } else if (msg.status === 'done') {
-      status.textContent = chrome.i18n.getMessage('syncSuccess');
-      status.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
-      status.style.color = '#34d399';
-      setTimeout(() => {
-        status.style.display = 'none';
-      }, 4000);
+      showStatus('syncSuccess', 'success');
       port.disconnect();
       restoreOptions();
     } else {
       const errorMsg = msg.error || chrome.i18n.getMessage('unknownErrorOccurred');
-      status.textContent = chrome.i18n.getMessage('syncFailed', [errorMsg]);
-      status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-      status.style.color = '#f87171';
-      setTimeout(() => {
-        status.style.display = 'none';
-      }, 4000);
+      showStatus('syncFailed', 'error', [errorMsg]);
       port.disconnect();
       restoreOptions();
     }
@@ -200,12 +188,10 @@ async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, default
   port.onDisconnect.addListener(() => {
     if (chrome.runtime.lastError) {
       console.error('Sync port disconnected with error:', chrome.runtime.lastError);
-      status.textContent = chrome.i18n.getMessage('syncFailed', [chrome.runtime.lastError.message]);
-      status.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
-      status.style.color = '#f87171';
-      setTimeout(() => {
-        status.style.display = 'none';
-      }, 4000);
+      showStatus('syncFailed', 'error', [chrome.runtime.lastError.message]);
+    } else {
+      // SW may have been killed mid-sync; ensure save button is always re-enabled
+      document.getElementById('saveBtn').disabled = false;
     }
   });
 }
@@ -230,7 +216,7 @@ async function restoreUserAndLocalOptions(managed) {
       const el = document.getElementById('managedCupsServers');
       if (el) el.value = managed.cupsServers.join('\n');
       const sec = document.getElementById('managedCupsSection');
-      if (sec) sec.style.display = 'block';
+      if (sec) sec.classList.add('visible');
     }
     if (managed.ippPrinters && managed.ippPrinters.length > 0) {
       const container = document.getElementById('managedIppPrintersContainer');
@@ -261,7 +247,7 @@ async function restoreUserAndLocalOptions(managed) {
         });
       }
       const sec = document.getElementById('managedIppSection');
-      if (sec) sec.style.display = 'block';
+      if (sec) sec.classList.add('visible');
     }
     if (managed.syncInterval !== undefined) {
       const syncInput = document.getElementById('syncInterval');
@@ -270,7 +256,7 @@ async function restoreUserAndLocalOptions(managed) {
         syncInput.disabled = true;
       }
       const badge = document.getElementById('managedIntervalBadge');
-      if (badge) badge.style.display = 'inline';
+      if (badge) badge.classList.add('visible');
     }
     if (managed.defaultRequestingUser !== undefined) {
       const userInput = document.getElementById('defaultRequestingUser');
@@ -279,7 +265,7 @@ async function restoreUserAndLocalOptions(managed) {
         userInput.disabled = true;
       }
       const badge = document.getElementById('managedUserBadge');
-      if (badge) badge.style.display = 'inline';
+      if (badge) badge.classList.add('visible');
     }
   }
 
@@ -386,12 +372,12 @@ async function restoreUserAndLocalOptions(managed) {
       }
       const warningBanner = document.getElementById('permissionsWarning');
       if (warningBanner) {
-        warningBanner.style.display = hasPermissions ? 'none' : 'block';
+        warningBanner.classList.toggle('visible', !hasPermissions);
       }
     });
   } else {
     const warningBanner = document.getElementById('permissionsWarning');
-    if (warningBanner) warningBanner.style.display = 'none';
+    if (warningBanner) warningBanner.classList.remove('visible');
   }
 }
 
@@ -407,18 +393,15 @@ function renderSyncResults(results) {
   
   for (const [url, data] of Object.entries(results)) {
     const li = document.createElement('li');
-    li.style.marginBottom = '5px';
-    li.style.padding = '8px';
-    li.style.borderRadius = '4px';
-    li.style.backgroundColor = data.status === 'success' ? '#e6f4ea' : '#fce8e6';
-    li.style.border = `1px solid ${data.status === 'success' ? '#ceead6' : '#fad2cf'}`;
+    const isSuccess = data.status === 'success';
+    li.className = 'sync-result ' + (isSuccess ? 'sync-result--success' : 'sync-result--error');
 
     // Use DOM construction instead of innerHTML to avoid XSS from crafted URLs/messages
     const strong = document.createElement('strong');
     strong.textContent = url;
     const br = document.createElement('br');
     const span = document.createElement('span');
-    span.style.color = data.status === 'success' ? '#137333' : '#c5221f';
+    span.className = isSuccess ? 'sync-result__message--success' : 'sync-result__message--error';
     span.textContent = data.message;
     li.appendChild(strong);
     li.appendChild(br);
@@ -452,14 +435,14 @@ function addPrinterRow(url = '', name = '') {
   const nameInput = document.createElement('input');
   nameInput.type = 'text';
   nameInput.className = 'printer-name';
-  nameInput.placeholder = 'Name (optional)';
+  nameInput.placeholder = chrome.i18n.getMessage('printerNamePlaceholder') || 'Name (optional)';
   nameInput.value = name;
   
   const removeBtn = document.createElement('button');
   removeBtn.type = 'button';
   removeBtn.className = 'remove-btn';
   removeBtn.textContent = '\u2715';
-  removeBtn.title = 'Remove printer';
+  removeBtn.title = chrome.i18n.getMessage('removePrinterTitle') || 'Remove printer';
   removeBtn.addEventListener('click', () => {
     row.remove();
     if (container.children.length === 0) {
@@ -513,6 +496,7 @@ function renderStoredCredentials(credentials) {
 
     removeBtn.addEventListener('click', () => {
       delete loadedCredentials[url];
+      chrome.storage.local.set({ deviceCredentials: loadedCredentials });
       row.remove();
       if (container.children.length === 0) {
         renderStoredCredentials({});

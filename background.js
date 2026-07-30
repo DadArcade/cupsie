@@ -83,7 +83,7 @@ console.error = function (...args) {
   appendLog('error', args);
 };
 
-import { buildIppRequest, parseIppResponse, IPP_OPS } from './ipp.js';
+import { buildIppRequest, parseIppResponse, IPP_OPS, TAGS } from './ipp.js';
 import { buildCDD } from './cdd.js';
 import { retry, notifyUserError, getHostname, fetchWithTimeout } from './errorHandler.js';
 
@@ -682,7 +682,7 @@ async function syncPrinters(onProgress, isInteractive = false) {
 
           console.log(`  IPP status code: 0x${parsed.statusCode.toString(16).padStart(4, '0')}`);
 
-          const printerGroups = parsed.groups.filter(g => g.tag === 4); // TAGS.printer_attributes_tag
+          const printerGroups = parsed.groups.filter(g => g.tag === TAGS.printer_attributes_tag);
 
           if (printerGroups.length === 0) {
             console.log(`  No queues returned by server.`);

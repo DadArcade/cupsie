@@ -2,8 +2,6 @@
 // Lightweight utilities for IPP (Internet Printing Protocol) binary encoding/decoding
 // tailored for a Chrome Extension environment using ArrayBuffers.
 
-export const IPP_VERSION_2_0 = 0x0200;
-
 export const IPP_OPS = {
   Print_Job: 0x0002,
   Validate_Job: 0x000A,
@@ -19,18 +17,14 @@ export const TAGS = {
   integer: 0x21,
   boolean: 0x22,
   enum: 0x23,
-  octetString: 0x30,
-  dateTime: 0x31,
   resolution: 0x32,
   rangeOfInteger: 0x33,
   begCollection: 0x34,
   endCollection: 0x37,
   memberAttrName: 0x4a,
-  textWithoutLanguage: 0x41,
   nameWithoutLanguage: 0x42,
   keyword: 0x44,
   uri: 0x45,
-  uriScheme: 0x46,
   charset: 0x47,
   naturalLanguage: 0x48,
   mimeMediaType: 0x49

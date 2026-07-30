@@ -33,6 +33,21 @@ export const TAGS = {
   mimeMediaType: 0x49
 };
 
+const MEDIA_MAP = {
+  'NA_LETTER': 'na_letter_8.5x11in',
+  'ISO_A4': 'iso_a4_210x297mm',
+  'NA_LEGAL': 'na_legal_8.5x14in',
+  'NA_LEDGER': 'na_ledger_11x17in',
+  'NA_EXECUTIVE': 'na_executive_7.25x10.5in',
+  'ISO_A3': 'iso_a3_297x420mm',
+  'ISO_A5': 'iso_a5_148x210mm',
+  'ISO_B4': 'iso_b4_250x353mm',
+  'ISO_B5': 'iso_b5_176x250mm',
+  'JIS_B4': 'jis_b4_257x364mm',
+  'JIS_B5': 'jis_b5_182x257mm',
+  'JPN_HAGAKI': 'jpn_hagaki_100x148mm'
+};
+
 // --- IPP Request Builder ---
 
 /**
@@ -59,6 +74,9 @@ export function buildIppRequest(operationId, requestId, targetUri, isPrintJob = 
 
   function writeString(str) {
     let strBytes = encoder.encode(str);
+    if (strBytes.length > 65535) {
+      throw new Error(`String is too long to encode in IPP (max 65535 bytes): ${str.substring(0, 64)}...`);
+    }
     writeInt16(strBytes.length);
     for (let b of strBytes) bytes.push(b);
   }
@@ -103,15 +121,16 @@ export function buildIppRequest(operationId, requestId, targetUri, isPrintJob = 
     // Group 2: Job Attributes
     bytes.push(TAGS.job_attributes_tag);
     if (cjt && cjt.print) {
-      let mediaSource = null;
-      let mediaType = null;
+      const vendorItems = {};
       if (cjt.print.vendor_ticket_item && Array.isArray(cjt.print.vendor_ticket_item)) {
         for (const item of cjt.print.vendor_ticket_item) {
-          if (!item.id || item.value === undefined || item.value === '__printer_default__') continue;
-          if (item.id === 'ipp-media-source') mediaSource = item.value;
-          if (item.id === 'ipp-media-type') mediaType = item.value;
+          if (!item || !item.id || item.value === undefined || item.value === '__printer_default__') continue;
+          vendorItems[item.id] = item.value;
         }
       }
+
+      const mediaSource = vendorItems['ipp-media-source'] || null;
+      const mediaType = vendorItems['ipp-media-type'] || null;
 
       if (cjt.print.color && cjt.print.color.type === 'STANDARD_MONOCHROME') {
         writeAttribute(TAGS.keyword, 'print-color-mode', 'monochrome');
@@ -142,21 +161,7 @@ export function buildIppRequest(operationId, requestId, targetUri, isPrintJob = 
       }
 
       if (cjt.print.media_size) {
-        const mediaMap = {
-          'NA_LETTER': 'na_letter_8.5x11in',
-          'ISO_A4': 'iso_a4_210x297mm',
-          'NA_LEGAL': 'na_legal_8.5x14in',
-          'NA_LEDGER': 'na_ledger_11x17in',
-          'NA_EXECUTIVE': 'na_executive_7.25x10.5in',
-          'ISO_A3': 'iso_a3_297x420mm',
-          'ISO_A5': 'iso_a5_148x210mm',
-          'ISO_B4': 'iso_b4_250x353mm',
-          'ISO_B5': 'iso_b5_176x250mm',
-          'JIS_B4': 'jis_b4_257x364mm',
-          'JIS_B5': 'jis_b5_182x257mm',
-          'JPN_HAGAKI': 'jpn_hagaki_100x148mm'
-        };
-        const pwgMedia = cjt.print.media_size.vendor_id || mediaMap[cjt.print.media_size.name];
+        const pwgMedia = cjt.print.media_size.vendor_id || MEDIA_MAP[cjt.print.media_size.name];
 
         if (pwgMedia) {
           let mediaValue = pwgMedia;
@@ -210,52 +215,48 @@ export function buildIppRequest(operationId, requestId, targetUri, isPrintJob = 
       }
 
       // Vendor Ticket Items (Advanced Options)
-      if (cjt.print.vendor_ticket_item && Array.isArray(cjt.print.vendor_ticket_item)) {
-        for (const item of cjt.print.vendor_ticket_item) {
-          if (!item || !item.id || item.value === undefined || item.value === '__printer_default__') continue;
-
-          switch (item.id) {
-            case 'ipp-media-source':
-              writeAttribute(TAGS.keyword, 'media-source', item.value);
-              break;
-            case 'ipp-output-bin':
-              writeAttribute(TAGS.keyword, 'output-bin', item.value);
-              break;
-            case 'ipp-media-type':
-              writeAttribute(TAGS.keyword, 'media-type', item.value);
-              break;
-            case 'ipp-print-scaling':
-              writeAttribute(TAGS.keyword, 'print-scaling', item.value);
-              break;
-            case 'ipp-job-sheets':
-              writeAttribute(TAGS.keyword, 'job-sheets', item.value);
-              break;
-            case 'ipp-page-delivery':
-              writeAttribute(TAGS.keyword, 'page-delivery', item.value);
-              break;
-            case 'ipp-collation':
-              writeAttribute(TAGS.keyword, 'multiple-document-handling', item.value);
-              break;
-            case 'ipp-job-hold-until':
-              writeAttribute(TAGS.keyword, 'job-hold-until', item.value);
-              break;
-            case 'ipp-orientation':
-              {
-                const valInt = parseInt(item.value, 10);
-                if (!isNaN(valInt)) {
-                  writeAttribute(TAGS.enum, 'orientation-requested', valInt);
-                }
+      for (const [id, value] of Object.entries(vendorItems)) {
+        switch (id) {
+          case 'ipp-media-source':
+            writeAttribute(TAGS.keyword, 'media-source', value);
+            break;
+          case 'ipp-output-bin':
+            writeAttribute(TAGS.keyword, 'output-bin', value);
+            break;
+          case 'ipp-media-type':
+            writeAttribute(TAGS.keyword, 'media-type', value);
+            break;
+          case 'ipp-print-scaling':
+            writeAttribute(TAGS.keyword, 'print-scaling', value);
+            break;
+          case 'ipp-job-sheets':
+            writeAttribute(TAGS.keyword, 'job-sheets', value);
+            break;
+          case 'ipp-page-delivery':
+            writeAttribute(TAGS.keyword, 'page-delivery', value);
+            break;
+          case 'ipp-collation':
+            writeAttribute(TAGS.keyword, 'multiple-document-handling', value);
+            break;
+          case 'ipp-job-hold-until':
+            writeAttribute(TAGS.keyword, 'job-hold-until', value);
+            break;
+          case 'ipp-orientation':
+            {
+              const valInt = parseInt(value, 10);
+              if (!isNaN(valInt)) {
+                writeAttribute(TAGS.enum, 'orientation-requested', valInt);
               }
-              break;
-            case 'ipp-finishings':
-              {
-                const valInt = parseInt(item.value, 10);
-                if (!isNaN(valInt)) {
-                  writeAttribute(TAGS.enum, 'finishings', valInt);
-                }
+            }
+            break;
+          case 'ipp-finishings':
+            {
+              const valInt = parseInt(value, 10);
+              if (!isNaN(valInt)) {
+                writeAttribute(TAGS.enum, 'finishings', valInt);
               }
-              break;
-          }
+            }
+            break;
         }
       }
     }
@@ -324,8 +325,8 @@ export function parseIppResponse(arrayBuffer) {
     throw new Error('Invalid IPP response payload');
   }
 
-  const version = view.getInt16(offset); offset += 2;
-  const statusCode = view.getInt16(offset); offset += 2;
+  const version = view.getUint16(offset); offset += 2;
+  const statusCode = view.getUint16(offset); offset += 2;
   const requestId = view.getInt32(offset); offset += 4;
 
   const result = {
@@ -357,7 +358,7 @@ export function parseIppResponse(arrayBuffer) {
 
     // Bounds-check before reading name length (2 bytes)
     if (offset + 2 > view.byteLength) break;
-    const nameLen = view.getInt16(offset); offset += 2;
+    const nameLen = view.getUint16(offset); offset += 2;
 
     let name = '';
     if (nameLen > 0) {
@@ -368,9 +369,9 @@ export function parseIppResponse(arrayBuffer) {
 
     // Bounds-check before reading value length (2 bytes)
     if (offset + 2 > view.byteLength) break;
-    const valLen = view.getInt16(offset); offset += 2;
+    const valLen = view.getUint16(offset); offset += 2;
 
-    if (valLen < 0 || offset + valLen > view.byteLength) break;
+    if (offset + valLen > view.byteLength) break;
     const valBytes = new Uint8Array(rawBuffer, baseOffset + offset, valLen);
     const valOffset = offset;
     offset += valLen;
@@ -381,21 +382,19 @@ export function parseIppResponse(arrayBuffer) {
       // All text / URI / keyword / charset / language types
       value = decoder.decode(valBytes);
     } else if (tag === TAGS.integer || tag === TAGS.enum) {
-      value = (valLen === 4) ? new DataView(rawBuffer, baseOffset + valOffset, 4).getInt32(0) : valBytes;
+      value = (valLen === 4) ? view.getInt32(valOffset) : valBytes;
     } else if (tag === TAGS.boolean) {
       value = (valLen === 1) ? valBytes[0] === 1 : valBytes;
     } else if (tag === TAGS.resolution) {
       // 4 bytes cross-feed DPI + 4 bytes feed DPI + 1 byte unit
       if (valLen === 9) {
-        const rv = new DataView(rawBuffer, baseOffset + valOffset, 9);
-        value = `${rv.getInt32(0)}x${rv.getInt32(4)}dpi`;
+        value = `${view.getInt32(valOffset)}x${view.getInt32(valOffset + 4)}dpi`;
       } else {
         value = valBytes;
       }
     } else if (tag === TAGS.rangeOfInteger) {
       if (valLen === 8) {
-        const rv = new DataView(rawBuffer, baseOffset + valOffset, 8);
-        value = [rv.getInt32(0), rv.getInt32(4)]; // [min, max]
+        value = [view.getInt32(valOffset), view.getInt32(valOffset + 4)]; // [min, max]
       } else {
         value = valBytes;
       }

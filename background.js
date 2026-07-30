@@ -5,6 +5,7 @@ const originalError = console.error;
 
 let logQueue = [];
 let isWritingLogs = false;
+let skipNextSyncFromOnChanged = false;
 
 async function appendLog(level, args) {
   const message = args.map(arg => {
@@ -175,8 +176,14 @@ async function updatePrinterUrlInStorage(oldUrl, newUrl) {
         return p;
       });
       if (updated) {
-        await chrome.storage.sync.set({ ippPrinters: updatedIppPrinters });
-        console.log(`Updated printer URL in storage.sync: ${oldUrl} -> ${newUrl}`);
+        try {
+          skipNextSyncFromOnChanged = true;
+          await chrome.storage.sync.set({ ippPrinters: updatedIppPrinters });
+          console.log(`Updated printer URL in storage.sync: ${oldUrl} -> ${newUrl}`);
+        } catch (setErr) {
+          skipNextSyncFromOnChanged = false;
+          throw setErr;
+        }
       }
     }
 
@@ -488,6 +495,14 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   // Only re-sync if a config key was the thing that actually changed.
   const configChanged = Object.keys(changes).some(k => CONFIG_KEYS.has(k));
   if (configChanged) {
+    if (changes.ippPrinters && skipNextSyncFromOnChanged) {
+      skipNextSyncFromOnChanged = false;
+      const otherKeys = Object.keys(changes).filter(k => k !== 'ippPrinters' && CONFIG_KEYS.has(k));
+      if (otherKeys.length === 0) {
+        console.log('Skipping redundant sync after auto-updating printer URL in storage.');
+        return;
+      }
+    }
     console.log('Configuration changed, running sync...');
     syncPrinters().catch(e => console.error('Failed to sync printers after config change:', e));
   }

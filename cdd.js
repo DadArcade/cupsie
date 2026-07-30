@@ -83,6 +83,84 @@ const i18n = (typeof chrome !== 'undefined' && chrome.i18n) ? chrome.i18n : {
   }
 };
 
+const PWG_TO_CDD_MAP = {
+  'na_letter_8.5x11in': 'NA_LETTER',
+  'na_legal_8.5x14in': 'NA_LEGAL',
+  'na_ledger_11x17in': 'NA_LEDGER',
+  'na_executive_7.25x10.5in': 'NA_EXECUTIVE',
+  'iso_a3_297x420mm': 'ISO_A3',
+  'iso_a4_210x297mm': 'ISO_A4',
+  'iso_a5_148x210mm': 'ISO_A5',
+  'iso_b4_250x353mm': 'ISO_B4',
+  'iso_b5_176x250mm': 'ISO_B5',
+  'jis_b4_257x364mm': 'JIS_B4',
+  'jis_b5_182x257mm': 'JIS_B5',
+  'jpn_hagaki_100x148mm': 'JPN_HAGAKI'
+};
+
+const ORIENTATION_MAP = {
+  3: i18n.getMessage('orient_portrait') || 'Portrait',
+  4: i18n.getMessage('orient_landscape') || 'Landscape',
+  5: i18n.getMessage('orient_rev_landscape') || 'Reverse Landscape',
+  6: i18n.getMessage('orient_rev_portrait') || 'Reverse Portrait',
+  7: i18n.getMessage('orient_none') || 'None'
+};
+
+const COLLATION_MAP = {
+  'separate-documents-uncollated-copies': i18n.getMessage('col_uncollated') || 'Uncollated',
+  'separate-documents-collated-copies': i18n.getMessage('col_collated') || 'Collated'
+};
+
+const FINISHINGS_MAP = {
+  3: i18n.getMessage('finish_none') || 'None',
+  4: i18n.getMessage('finish_staple') || 'Staple',
+  5: i18n.getMessage('finish_punch') || 'Punch',
+  6: i18n.getMessage('finish_cover') || 'Cover',
+  7: i18n.getMessage('finish_bind') || 'Bind',
+  10: i18n.getMessage('finish_saddle_stitch') || 'Saddle Stitch',
+  11: i18n.getMessage('finish_edge_stitch') || 'Edge Stitch',
+  20: i18n.getMessage('finish_staple_top_left') || 'Staple Top Left',
+  21: i18n.getMessage('finish_staple_bottom_left') || 'Staple Bottom Left',
+  22: i18n.getMessage('finish_staple_top_right') || 'Staple Top Right',
+  23: i18n.getMessage('finish_staple_bottom_right') || 'Staple Bottom Right',
+  24: i18n.getMessage('finish_edge_stitch_left') || 'Edge Stitch Left',
+  25: i18n.getMessage('finish_edge_stitch_top') || 'Edge Stitch Top',
+  26: i18n.getMessage('finish_edge_stitch_right') || 'Edge Stitch Right',
+  27: i18n.getMessage('finish_edge_stitch_bottom') || 'Edge Stitch Bottom',
+  28: i18n.getMessage('finish_staple_dual_left') || 'Staple Dual Left',
+  29: i18n.getMessage('finish_staple_dual_top') || 'Staple Dual Top',
+  30: i18n.getMessage('finish_staple_dual_right') || 'Staple Dual Right',
+  31: i18n.getMessage('finish_staple_dual_bottom') || 'Staple Dual Bottom',
+  32: i18n.getMessage('finish_staple_triple_left') || 'Staple Triple Left',
+  33: i18n.getMessage('finish_staple_triple_top') || 'Staple Triple Top',
+  34: i18n.getMessage('finish_staple_triple_right') || 'Staple Triple Right',
+  35: i18n.getMessage('finish_staple_triple_bottom') || 'Staple Triple Bottom',
+  50: i18n.getMessage('finish_bind_left') || 'Bind Left',
+  51: i18n.getMessage('finish_bind_top') || 'Bind Top',
+  52: i18n.getMessage('finish_bind_right') || 'Bind Right',
+  53: i18n.getMessage('finish_bind_bottom') || 'Bind Bottom',
+  70: i18n.getMessage('finish_trim') || 'Trim',
+  74: i18n.getMessage('finish_punch_dual_left') || 'Punch Dual Left',
+  75: i18n.getMessage('finish_punch_dual_top') || 'Punch Dual Top',
+  76: i18n.getMessage('finish_punch_dual_right') || 'Punch Dual Right',
+  78: i18n.getMessage('finish_punch_triple_left') || 'Punch Triple Left',
+  79: i18n.getMessage('finish_punch_triple_top') || 'Punch Triple Top',
+  80: i18n.getMessage('finish_punch_triple_right') || 'Punch Triple Right',
+  82: i18n.getMessage('finish_punch_quad_left') || 'Punch Quad Left',
+  83: i18n.getMessage('finish_punch_quad_top') || 'Punch Quad Top',
+  84: i18n.getMessage('finish_punch_quad_right') || 'Punch Quad Right',
+  90: i18n.getMessage('finish_fold_accordion') || 'Fold Accordion',
+  91: i18n.getMessage('finish_fold_double_gate') || 'Fold Double Gate',
+  92: i18n.getMessage('finish_fold_gate') || 'Fold Gate',
+  93: i18n.getMessage('finish_fold_half') || 'Fold Half',
+  94: i18n.getMessage('finish_fold_half_z') || 'Fold Half Z',
+  95: i18n.getMessage('finish_fold_left_gate') || 'Fold Left Gate',
+  96: i18n.getMessage('finish_fold_letter') || 'Fold Letter',
+  97: i18n.getMessage('finish_fold_poster') || 'Fold Poster',
+  98: i18n.getMessage('finish_fold_right_gate') || 'Fold Right Gate',
+  99: i18n.getMessage('finish_fold_z') || 'Fold Z'
+};
+
 function parsePwgSize(mediaString) {
   const parts = mediaString.split('_');
   if (parts.length < 2) return null;
@@ -248,20 +326,6 @@ export function buildCDD(ippAttributes = {}) {
 
   if (mediaSupported && Array.isArray(mediaSupported)) {
     const mediaOptions = [];
-    const PWG_TO_CDD_MAP = {
-      'na_letter_8.5x11in': 'NA_LETTER',
-      'na_legal_8.5x14in': 'NA_LEGAL',
-      'na_ledger_11x17in': 'NA_LEDGER',
-      'na_executive_7.25x10.5in': 'NA_EXECUTIVE',
-      'iso_a3_297x420mm': 'ISO_A3',
-      'iso_a4_210x297mm': 'ISO_A4',
-      'iso_a5_148x210mm': 'ISO_A5',
-      'iso_b4_250x353mm': 'ISO_B4',
-      'iso_b5_176x250mm': 'ISO_B5',
-      'jis_b4_257x364mm': 'JIS_B4',
-      'jis_b5_182x257mm': 'JIS_B5',
-      'jpn_hagaki_100x148mm': 'JPN_HAGAKI'
-    };
 
     let hasDefault = false;
     for (const media of mediaSupported) {
@@ -503,13 +567,6 @@ export function buildCDD(ippAttributes = {}) {
   addVendorSelect('ipp-page-delivery', i18n.getMessage('page_delivery'), ippAttributes['page-delivery-supported'], getFirst(ippAttributes['page-delivery-default']));
 
   // 7e. Orientation (orientation-requested-supported) — enum integers
-  const ORIENTATION_MAP = {
-    3: i18n.getMessage('orient_portrait') || 'Portrait',
-    4: i18n.getMessage('orient_landscape') || 'Landscape',
-    5: i18n.getMessage('orient_rev_landscape') || 'Reverse Landscape',
-    6: i18n.getMessage('orient_rev_portrait') || 'Reverse Portrait',
-    7: i18n.getMessage('orient_none') || 'None'
-  };
   const orientSupported = ippAttributes['orientation-requested-supported'];
   const orientDefault = getFirst(ippAttributes['orientation-requested-default']);
   if (orientSupported && Array.isArray(orientSupported) && orientSupported.length > 0) {
@@ -543,10 +600,6 @@ export function buildCDD(ippAttributes = {}) {
   }
 
   // 7f. Collation (multiple-document-handling-supported)
-  const COLLATION_MAP = {
-    'separate-documents-uncollated-copies': i18n.getMessage('col_uncollated') || 'Uncollated',
-    'separate-documents-collated-copies': i18n.getMessage('col_collated') || 'Collated'
-  };
   const collationSupported = ippAttributes['multiple-document-handling-supported'];
   const collationDefault = getFirst(ippAttributes['multiple-document-handling-default']);
   if (collationSupported && Array.isArray(collationSupported) && collationSupported.length > 0) {
@@ -584,57 +637,6 @@ export function buildCDD(ippAttributes = {}) {
   addVendorSelect('ipp-job-hold-until', i18n.getMessage('hold_until'), ippAttributes['job-hold-until-supported'], getFirst(ippAttributes['job-hold-until-default']));
 
   // 8. Finishing Options (finishings-supported)
-  // IPP finishings is an enum defined in RFC 8011 + IANA IPP registry extensions.
-  const FINISHINGS_MAP = {
-    3: i18n.getMessage('finish_none') || 'None',
-    4: i18n.getMessage('finish_staple') || 'Staple',
-    5: i18n.getMessage('finish_punch') || 'Punch',
-    6: i18n.getMessage('finish_cover') || 'Cover',
-    7: i18n.getMessage('finish_bind') || 'Bind',
-    10: i18n.getMessage('finish_saddle_stitch') || 'Saddle Stitch',
-    11: i18n.getMessage('finish_edge_stitch') || 'Edge Stitch',
-    20: i18n.getMessage('finish_staple_top_left') || 'Staple Top Left',
-    21: i18n.getMessage('finish_staple_bottom_left') || 'Staple Bottom Left',
-    22: i18n.getMessage('finish_staple_top_right') || 'Staple Top Right',
-    23: i18n.getMessage('finish_staple_bottom_right') || 'Staple Bottom Right',
-    24: i18n.getMessage('finish_edge_stitch_left') || 'Edge Stitch Left',
-    25: i18n.getMessage('finish_edge_stitch_top') || 'Edge Stitch Top',
-    26: i18n.getMessage('finish_edge_stitch_right') || 'Edge Stitch Right',
-    27: i18n.getMessage('finish_edge_stitch_bottom') || 'Edge Stitch Bottom',
-    28: i18n.getMessage('finish_staple_dual_left') || 'Staple Dual Left',
-    29: i18n.getMessage('finish_staple_dual_top') || 'Staple Dual Top',
-    30: i18n.getMessage('finish_staple_dual_right') || 'Staple Dual Right',
-    31: i18n.getMessage('finish_staple_dual_bottom') || 'Staple Dual Bottom',
-    32: i18n.getMessage('finish_staple_triple_left') || 'Staple Triple Left',
-    33: i18n.getMessage('finish_staple_triple_top') || 'Staple Triple Top',
-    34: i18n.getMessage('finish_staple_triple_right') || 'Staple Triple Right',
-    35: i18n.getMessage('finish_staple_triple_bottom') || 'Staple Triple Bottom',
-    50: i18n.getMessage('finish_bind_left') || 'Bind Left',
-    51: i18n.getMessage('finish_bind_top') || 'Bind Top',
-    52: i18n.getMessage('finish_bind_right') || 'Bind Right',
-    53: i18n.getMessage('finish_bind_bottom') || 'Bind Bottom',
-    70: i18n.getMessage('finish_trim') || 'Trim', 
-    74: i18n.getMessage('finish_punch_dual_left') || 'Punch Dual Left',
-    75: i18n.getMessage('finish_punch_dual_top') || 'Punch Dual Top',
-    76: i18n.getMessage('finish_punch_dual_right') || 'Punch Dual Right',
-    78: i18n.getMessage('finish_punch_triple_left') || 'Punch Triple Left',
-    79: i18n.getMessage('finish_punch_triple_top') || 'Punch Triple Top',
-    80: i18n.getMessage('finish_punch_triple_right') || 'Punch Triple Right',
-    82: i18n.getMessage('finish_punch_quad_left') || 'Punch Quad Left',
-    83: i18n.getMessage('finish_punch_quad_top') || 'Punch Quad Top',
-    84: i18n.getMessage('finish_punch_quad_right') || 'Punch Quad Right',
-    90: i18n.getMessage('finish_fold_accordion') || 'Fold Accordion',
-    91: i18n.getMessage('finish_fold_double_gate') || 'Fold Double Gate',
-    92: i18n.getMessage('finish_fold_gate') || 'Fold Gate', 
-    93: i18n.getMessage('finish_fold_half') || 'Fold Half',
-    94: i18n.getMessage('finish_fold_half_z') || 'Fold Half Z',
-    95: i18n.getMessage('finish_fold_left_gate') || 'Fold Left Gate',
-    96: i18n.getMessage('finish_fold_letter') || 'Fold Letter',
-    97: i18n.getMessage('finish_fold_poster') || 'Fold Poster',
-    98: i18n.getMessage('finish_fold_right_gate') || 'Fold Right Gate',
-    99: i18n.getMessage('finish_fold_z') || 'Fold Z',
-  };
-
   const finishings = ippAttributes['finishings-supported'];
   const finishingsDefault = getFirst(ippAttributes['finishings-default']);
   if (finishings && Array.isArray(finishings)) {

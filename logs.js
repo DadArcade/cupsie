@@ -94,34 +94,34 @@ async function downloadLogs() {
   const logs = items ? items.logs || [] : [];
   if (logs.length === 0) return;
 
-    let text = chrome.i18n.getMessage('downloadHeaderTitle') + '\n';
-    text += '======================================\n\n';
+  let text = chrome.i18n.getMessage('downloadHeaderTitle') + '\n';
+  text += '======================================\n\n';
 
-    for (const log of logs) {
-      let timeStr = 'UNKNOWN_TIME';
-      try {
-        const date = new Date(log.timestamp);
-        if (!isNaN(date.getTime())) {
-          timeStr = date.toISOString();
-        }
-      } catch (e) {
-        console.error('Failed to parse log timestamp:', log.timestamp, e);
+  for (const log of logs) {
+    let timeStr = 'UNKNOWN_TIME';
+    try {
+      const date = new Date(log.timestamp);
+      if (!isNaN(date.getTime())) {
+        timeStr = date.toISOString();
       }
-      text += `[${timeStr}] [${(log.level || 'info').toUpperCase()}] ${log.message || ''}\n`;
+    } catch (e) {
+      console.error('Failed to parse log timestamp:', log.timestamp, e);
     }
+    text += `[${timeStr}] [${(log.level || 'info').toUpperCase()}] ${log.message || ''}\n`;
+  }
 
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `cupsie_logs_${Date.now()}.txt`;
-    document.body.appendChild(a);
-    a.click();
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cupsie_logs_${Date.now()}.txt`;
+  document.body.appendChild(a);
+  a.click();
 
-    // Clean up
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
+  // Clean up
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
 }

@@ -26,12 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (changes.lastSyncTime && changes.lastSyncTime.newValue) {
+  if (namespace === 'local' && changes.lastSyncTime && changes.lastSyncTime.newValue) {
     const d = new Date(changes.lastSyncTime.newValue);
     const el = document.getElementById('lastSyncTime');
     if (el) el.innerText = d.toLocaleString();
   }
-  if (changes.syncResults && changes.syncResults.newValue) {
+  if (namespace === 'local' && changes.syncResults && changes.syncResults.newValue) {
     renderSyncResults(changes.syncResults.newValue);
   }
 });
@@ -176,12 +176,10 @@ async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, default
     } else if (msg.status === 'done') {
       showStatus('syncSuccess', 'success');
       port.disconnect();
-      restoreOptions();
     } else {
       const errorMsg = msg.error || chrome.i18n.getMessage('unknownErrorOccurred');
       showStatus('syncFailed', 'error', [errorMsg]);
       port.disconnect();
-      restoreOptions();
     }
   });
 
@@ -222,6 +220,7 @@ async function restoreUserAndLocalOptions(managed) {
       const container = document.getElementById('managedIppPrintersContainer');
       if (container) {
         container.innerHTML = '';
+        const fragment = document.createDocumentFragment();
         managed.ippPrinters.forEach(printer => {
           const norm = normalizeIppPrinter(printer);
           if (norm) {
@@ -242,9 +241,10 @@ async function restoreUserAndLocalOptions(managed) {
             
             row.appendChild(urlInput);
             row.appendChild(nameInput);
-            container.appendChild(row);
+            fragment.appendChild(row);
           }
         });
+        container.appendChild(fragment);
       }
       const sec = document.getElementById('managedIppSection');
       if (sec) sec.classList.add('visible');
@@ -292,12 +292,14 @@ async function restoreUserAndLocalOptions(managed) {
     const container = document.getElementById('ippPrintersContainer');
     if (container) {
       container.innerHTML = '';
+      const fragment = document.createDocumentFragment();
       items.ippPrinters.forEach(printer => {
         const norm = normalizeIppPrinter(printer);
         if (norm) {
-          addPrinterRow(norm.url, norm.name);
+          addPrinterRow(norm.url, norm.name, fragment);
         }
       });
+      container.appendChild(fragment);
     }
   } else {
     const container = document.getElementById('ippPrintersContainer');
@@ -391,6 +393,7 @@ function renderSyncResults(results) {
     return;
   }
   
+  const fragment = document.createDocumentFragment();
   for (const [url, data] of Object.entries(results)) {
     const li = document.createElement('li');
     const isSuccess = data.status === 'success';
@@ -406,8 +409,9 @@ function renderSyncResults(results) {
     li.appendChild(strong);
     li.appendChild(br);
     li.appendChild(span);
-    list.appendChild(li);
+    fragment.appendChild(li);
   }
+  list.appendChild(fragment);
 }
 
 function normalizeIppPrinter(p) {
@@ -420,8 +424,9 @@ function normalizeIppPrinter(p) {
   return null;
 }
 
-function addPrinterRow(url = '', name = '') {
-  const container = document.getElementById('ippPrintersContainer');
+function addPrinterRow(url = '', name = '', targetParent = null) {
+  const container = targetParent || document.getElementById('ippPrintersContainer');
+  if (!container) return;
   
   const row = document.createElement('div');
   row.className = 'ipp-printer-row printer-row';
@@ -445,7 +450,8 @@ function addPrinterRow(url = '', name = '') {
   removeBtn.title = chrome.i18n.getMessage('removePrinterTitle') || 'Remove printer';
   removeBtn.addEventListener('click', () => {
     row.remove();
-    if (container.children.length === 0) {
+    const containerEl = document.getElementById('ippPrintersContainer');
+    if (containerEl && containerEl.children.length === 0) {
       addPrinterRow('', '');
     }
   });
@@ -471,6 +477,7 @@ function renderStoredCredentials(credentials) {
     return;
   }
 
+  const fragment = document.createDocumentFragment();
   entries.forEach(([url, creds]) => {
     const row = document.createElement('div');
     row.className = 'credentials-row';
@@ -506,6 +513,7 @@ function renderStoredCredentials(credentials) {
     row.appendChild(urlInput);
     row.appendChild(usernameInput);
     row.appendChild(removeBtn);
-    container.appendChild(row);
+    fragment.appendChild(row);
   });
+  container.appendChild(fragment);
 }

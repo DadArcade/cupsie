@@ -205,6 +205,9 @@ async function updatePrinterUrlInStorage(oldUrl, newUrl) {
 
 function waitForAuthResolution(printerId) {
   return new Promise((resolve) => {
+    let timeoutId;
+    let closeTimeoutId;
+
     const checkStorageChange = async (changes, namespace) => {
       if (namespace !== 'local') return;
       if (changes.authRequiredDevices) {
@@ -219,7 +222,7 @@ function waitForAuthResolution(printerId) {
     const checkWindowClose = (windowId) => {
       chrome.storage.local.get(['loginWindowId'], (result) => {
         if (result.loginWindowId === windowId || !result.loginWindowId) {
-          setTimeout(async () => {
+          closeTimeoutId = setTimeout(async () => {
             const storage = await chrome.storage.local.get(['authRequiredDevices']);
             const devices = storage.authRequiredDevices || {};
             if (devices[printerId] === undefined) {
@@ -235,6 +238,8 @@ function waitForAuthResolution(printerId) {
     };
 
     const cleanup = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (closeTimeoutId) clearTimeout(closeTimeoutId);
       chrome.storage.onChanged.removeListener(checkStorageChange);
       chrome.windows.onRemoved.removeListener(checkWindowClose);
     };
@@ -243,7 +248,7 @@ function waitForAuthResolution(printerId) {
     chrome.windows.onRemoved.addListener(checkWindowClose);
 
     // Safety timeout: 2 minutes
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       cleanup();
       resolve(false);
     }, 120000);
@@ -428,15 +433,15 @@ function showPrintFailureNotification(jobTitle, reason) {
 chrome.runtime.onInstalled.addListener(async () => {
   const manifest = chrome.runtime.getManifest();
   console.log(`${manifest.name} was updated to ${manifest.version}`);
-  
+
   // Migrate settings from local storage to sync storage if needed
   try {
     const local = await chrome.storage.local.get(['cupsServers', 'ippPrinters', 'syncInterval']);
     const sync = await chrome.storage.sync.get(['cupsServers', 'ippPrinters', 'syncInterval']);
-    
+
     const migrateData = {};
     const keysToRemove = [];
-    
+
     if (local.cupsServers !== undefined && sync.cupsServers === undefined) {
       migrateData.cupsServers = local.cupsServers;
       keysToRemove.push('cupsServers');
@@ -449,7 +454,7 @@ chrome.runtime.onInstalled.addListener(async () => {
       migrateData.syncInterval = local.syncInterval;
       keysToRemove.push('syncInterval');
     }
-    
+
     if (Object.keys(migrateData).length > 0) {
       await chrome.storage.sync.set(migrateData);
       await chrome.storage.local.remove(keysToRemove);
@@ -564,7 +569,7 @@ async function syncPrinters(onProgress, isInteractive = false) {
 
     const managedIpp = managedItems.ippPrinters || [];
     const syncIpp = syncItems.ippPrinters || [];
-    
+
     // Normalize and deduplicate by URL (policy values take precedence)
     const ippPrintersMap = new Map();
     for (const item of [...managedIpp, ...syncIpp]) {
@@ -709,7 +714,7 @@ async function syncPrinters(onProgress, isInteractive = false) {
         const originalUrl = printer.url;
         const cleanUrl = originalUrl.trim().replace(/\/+$/, '');
         const endsWithIpp = cleanUrl.endsWith('/ipp') || cleanUrl.endsWith('/ipp/print') || cleanUrl.endsWith('/printer');
-        
+
         const candidateUrls = [originalUrl];
         if (!endsWithIpp) {
           candidateUrls.push(cleanUrl + '/ipp');
@@ -726,12 +731,12 @@ async function syncPrinters(onProgress, isInteractive = false) {
           const testUrl = candidateUrls[i];
           const printerHost = getHostname(testUrl);
           const targetName = printer.name ? `${printer.name} (${printerHost})` : printerHost;
-          console.log(`  [Candidate ${i+1}/${candidateUrls.length}] Trying URL: ${testUrl}`);
-          
+          console.log(`  [Candidate ${i + 1}/${candidateUrls.length}] Trying URL: ${testUrl}`);
+
           try {
             let currentVersion = 0x0200;
             let requestBuffer = buildIppRequest(IPP_OPS.Get_Printer_Attributes, 2, toIppScheme(testUrl), false, 'Print Job', null, username || 'Chrome User', currentVersion);
-            
+
             const performFetch = async (reqBuf) => {
               const res = await fetchWithAuth(testUrl, {
                 method: 'POST',
@@ -753,7 +758,7 @@ async function syncPrinters(onProgress, isInteractive = false) {
                 console.warn(`  ✖ Non-IPP response from standalone printer at ${testUrl}: ${contentType}`);
                 throw new Error(chrome.i18n.getMessage('sync_error_non_ipp') || 'Non-IPP response');
               }
-              
+
               // Check credentials if they are stored for this printer
               let isAuthorized = true;
               try {
@@ -928,7 +933,7 @@ async function syncPrinters(onProgress, isInteractive = false) {
 
 chrome.printerProvider.onGetPrintersRequested.addListener(async (callback) => {
   console.log('Print dialog opened: returning cached printers.');
-  
+
   // Launch credentials dialog if any printer/server needs authentication
   checkAndPromptAuth();
 
@@ -1254,7 +1259,7 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
       if (response.status === 401 || response.status === 403) {
         await markDeviceAuthRequired(printJob.printerId, 'ipp');
         checkAndPromptAuth();
-        
+
         // Wait for user to input credentials
         const authorized = await waitForAuthResolution(printJob.printerId);
         if (authorized) {

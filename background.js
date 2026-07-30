@@ -7,6 +7,8 @@ let logQueue = [];
 let isWritingLogs = false;
 let skipNextSyncFromOnChanged = false;
 
+let logWriteTimeout = null;
+
 async function appendLog(level, args) {
   const message = args.map(arg => {
     if (arg instanceof Error) return arg.stack || arg.message;
@@ -17,7 +19,24 @@ async function appendLog(level, args) {
   }).join(' ');
 
   logQueue.push({ timestamp: Date.now(), level, message });
-  processLogQueue();
+
+  if (logQueue.length >= 50) {
+    if (logWriteTimeout) {
+      clearTimeout(logWriteTimeout);
+      logWriteTimeout = null;
+    }
+    processLogQueue();
+  } else {
+    scheduleLogWrite();
+  }
+}
+
+function scheduleLogWrite() {
+  if (logWriteTimeout || isWritingLogs) return;
+  logWriteTimeout = setTimeout(() => {
+    logWriteTimeout = null;
+    processLogQueue();
+  }, 2000);
 }
 
 async function processLogQueue() {
@@ -40,7 +59,11 @@ async function processLogQueue() {
   } finally {
     isWritingLogs = false;
     if (logQueue.length > 0) {
-      processLogQueue();
+      if (logQueue.length >= 50) {
+        processLogQueue();
+      } else {
+        scheduleLogWrite();
+      }
     }
   }
 }

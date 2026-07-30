@@ -183,25 +183,50 @@ export function buildCDD(ippAttributes = {}) {
   };
 
   // 1. Color Attributes
-  const colorSupported = ippAttributes['print-color-mode-supported'] || ippAttributes['color-supported'];
+  const printColorModeSupported = ippAttributes['print-color-mode-supported'];
+  const colorSupportedAttr = ippAttributes['color-supported'];
   const colorDefault = getFirst(ippAttributes['print-color-mode-default'] || ippAttributes['color-default']);
-  if (colorSupported) {
-    const options = [];
-    const isDefColor = (colorDefault === 'color' || colorDefault === true);
-    if (Array.isArray(colorSupported)) {
-      if (colorSupported.includes('color')) options.push({ type: "STANDARD_COLOR", is_default: isDefColor });
-      if (colorSupported.includes('monochrome')) options.push({ type: "STANDARD_MONOCHROME", is_default: !isDefColor });
-    } else if (colorSupported === true) {
-      options.push({ type: "STANDARD_COLOR", is_default: isDefColor });
-      options.push({ type: "STANDARD_MONOCHROME", is_default: !isDefColor });
+
+  let supportsColor = false;
+  let supportsMono = false;
+
+  if (printColorModeSupported && Array.isArray(printColorModeSupported)) {
+    if (printColorModeSupported.includes('color') || printColorModeSupported.includes('auto-color')) {
+      supportsColor = true;
     }
-    
-    // Fallback if none matched
-    if (!options.some(o => o.is_default) && options.length > 0) options[0].is_default = true;
-    cdd.printer.color = { option: options };
-  } else {
-    cdd.printer.color = { option: [{ type: "STANDARD_MONOCHROME", is_default: true }] };
+    if (printColorModeSupported.includes('monochrome') || printColorModeSupported.includes('process-monochrome') || printColorModeSupported.includes('bi-level')) {
+      supportsMono = true;
+    }
   }
+
+  if (!supportsColor && !supportsMono && colorSupportedAttr) {
+    const isColorSupported = getFirst(colorSupportedAttr);
+    if (isColorSupported === true) {
+      supportsColor = true;
+      supportsMono = true;
+    } else if (isColorSupported === false) {
+      supportsMono = true;
+    }
+  }
+
+  if (!supportsColor && !supportsMono) {
+    supportsMono = true;
+  }
+
+  const colorOptions = [];
+  const isDefColor = (colorDefault === 'color' || colorDefault === true);
+
+  if (supportsColor) {
+    colorOptions.push({ type: "STANDARD_COLOR", is_default: isDefColor });
+  }
+  if (supportsMono) {
+    colorOptions.push({ type: "STANDARD_MONOCHROME", is_default: !isDefColor || !supportsColor });
+  }
+
+  if (!colorOptions.some(o => o.is_default) && colorOptions.length > 0) {
+    colorOptions[0].is_default = true;
+  }
+  cdd.printer.color = { option: colorOptions };
 
   // 2. Duplex (Two-sided printing)
   const sidesSupported = ippAttributes['sides-supported'];

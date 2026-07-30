@@ -837,6 +837,11 @@ async function syncPrinters(onProgress, isInteractive = false) {
             } else {
               console.warn(`  ✖ HTTP ${response.status} — printer rejected the request.`);
               if (response.status === 401 || response.status === 403) {
+                const contentType = response.headers.get('Content-Type') || '';
+                if (contentType && !contentType.includes('application/ipp')) {
+                  console.warn(`  ✖ Non-IPP auth response (status ${response.status}) at ${testUrl}: ${contentType}`);
+                  throw new Error(chrome.i18n.getMessage('sync_error_non_ipp') || 'Non-IPP response');
+                }
                 successUrl = testUrl;
                 finalResponse = response;
                 finalIppVersion = currentVersion;

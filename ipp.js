@@ -2,6 +2,9 @@
 // Lightweight utilities for IPP (Internet Printing Protocol) binary encoding/decoding
 // tailored for a Chrome Extension environment using ArrayBuffers.
 
+const encoder = new TextEncoder();
+const decoder = new TextDecoder('utf-8');
+
 export const IPP_OPS = {
   Print_Job: 0x0002,
   Validate_Job: 0x000A,
@@ -55,7 +58,6 @@ export function buildIppRequest(operationId, requestId, targetUri, isPrintJob = 
   }
 
   function writeString(str) {
-    let encoder = new TextEncoder();
     let strBytes = encoder.encode(str);
     writeInt16(strBytes.length);
     for (let b of strBytes) bytes.push(b);
@@ -333,7 +335,6 @@ export function parseIppResponse(arrayBuffer) {
     groups: [] // Array of { tag, attributes: {} }
   };
 
-  const decoder = new TextDecoder('utf-8');
   let currentGroup = null;
   let currentName = null;
 

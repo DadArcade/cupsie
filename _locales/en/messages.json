@@ -323,6 +323,10 @@
     "message": "The printer is not currently accepting print jobs.",
     "description": "IPP status code 0x0506 translation."
   },
+  "ipp_error_0507": {
+    "message": "0x507 - The printer is busy",
+    "description": "IPP status code 0x0507 translation."
+  },
   "ipp_error_unknown": {
     "message": "Printer returned status code $CODE$.",
     "description": "Generic IPP status code translation.",
@@ -720,6 +724,10 @@
   "removeCredentialTitle": {
     "message": "Remove credential",
     "description": "Tooltip for the remove button of a stored credential."
+  },
+  "loginErrorLoadFailed": {
+    "message": "Failed to load authentication requirements.",
+    "description": "Error message when loading authentication required devices from local storage fails."
   },
   "loginDisclaimer": {
     "message": "Your password will be stored in plaintext on disk.",

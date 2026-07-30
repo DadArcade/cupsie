@@ -445,7 +445,8 @@ const IPP_STATUS_MESSAGES = {
   0x0407: 'ipp_error_0407',
   0x0408: 'ipp_error_0408',
   0x040b: 'ipp_error_040b',
-  0x0506: 'ipp_error_0506'
+  0x0506: 'ipp_error_0506',
+  0x0507: 'ipp_error_0507'
 };
 
 function showPrintFailureNotification(jobTitle, reason) {

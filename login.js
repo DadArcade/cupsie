@@ -8,12 +8,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load auth required devices and existing credentials
   let authDevices = {};
   let existingCreds = {};
+  let storageLoadFailed = false;
   try {
     const storage = await chrome.storage.local.get(['authRequiredDevices', 'deviceCredentials']);
     authDevices = storage.authRequiredDevices || {};
     existingCreds = storage.deviceCredentials || {};
   } catch (e) {
     console.error('Failed to read storage in login.js:', e);
+    storageLoadFailed = true;
+  }
+
+  if (storageLoadFailed) {
+    showError(chrome.i18n.getMessage('loginErrorLoadFailed') || 'Failed to load authentication requirements.');
+    saveBtn.disabled = true;
+    return;
   }
 
   const deviceUrls = Object.keys(authDevices);
@@ -24,6 +32,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => window.close(), 1500);
     return;
   }
+
+  // Track element references to avoid DOM queries later
+  const deviceRows = [];
 
   // Populate UI
   deviceUrls.forEach(url => {
@@ -70,16 +81,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkbox.addEventListener('change', (e) => {
       usernameInput.disabled = e.target.checked;
       passwordInput.disabled = e.target.checked;
-      if (e.target.checked) {
-        usernameInput.value = '';
-        passwordInput.value = '';
-      }
     });
 
     row.appendChild(title);
     row.appendChild(inputGroup);
     row.appendChild(ignoreLabel);
     deviceList.appendChild(row);
+
+    deviceRows.push({
+      url,
+      usernameInput,
+      passwordInput,
+      checkbox
+    });
   });
 
   cancelBtn.addEventListener('click', () => {
@@ -95,22 +109,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     cancelBtn.disabled = true;
 
     // Collect entered credentials and ignored list
-    const rows = deviceList.querySelectorAll('.device-row');
     const newCreds = { ...existingCreds };
     const ignoredDevices = {};
     const removedAuthDevices = [];
 
-    rows.forEach(row => {
-      const url = row.dataset.url;
-      const isIgnored = row.querySelector('.ignore-checkbox').checked;
+    deviceRows.forEach(({ url, usernameInput, passwordInput, checkbox }) => {
+      const isIgnored = checkbox.checked;
 
       if (isIgnored) {
         ignoredDevices[url] = true;
         delete newCreds[url];
         removedAuthDevices.push(url);
       } else {
-        const username = row.querySelector('.username').value.trim();
-        const password = row.querySelector('.password').value;
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
         if (username) {
           newCreds[url] = { username, password };
         } else {

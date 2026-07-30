@@ -513,7 +513,7 @@ export function buildCDD(ippAttributes = {}) {
   const orientSupported = ippAttributes['orientation-requested-supported'];
   const orientDefault = getFirst(ippAttributes['orientation-requested-default']);
   if (orientSupported && Array.isArray(orientSupported) && orientSupported.length > 0) {
-    const hasDef = orientDefault !== undefined;
+    const hasDef = orientDefault !== undefined && orientDefault !== null;
     const defStr = hasDef ? orientDefault.toString() : undefined;
     const options = [];
 
@@ -647,7 +647,7 @@ export function buildCDD(ippAttributes = {}) {
     }
     
     if (finishingItems.length > 0) {
-       const defStr = finishingsDefault !== undefined ? finishingsDefault.toString() : undefined;
+       const defStr = finishingsDefault !== undefined && finishingsDefault !== null ? finishingsDefault.toString() : undefined;
        const options = finishingItems.map((item, index) => ({
          value: item,
          display_name: finishingLabels[index],

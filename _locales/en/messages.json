@@ -15,18 +15,7 @@
     "message": "Cupsie Configuration",
     "description": "Main header on the options page."
   },
-  "managedPoliciesNote": {
-    "message": "Enterprise policies are added automatically. You can add more printers below.",
-    "description": "Explanatory note about enterprise settings."
-  },
-  "managedCupsLabel": {
-    "message": "Enterprise Managed CUPS Servers",
-    "description": "Label for enterprise managed CUPS servers textarea."
-  },
-  "managedCupsPlaceholder": {
-    "message": "(Managed CUPS servers)",
-    "description": "Placeholder for enterprise managed CUPS servers textarea."
-  },
+
   "userCupsLabel": {
     "message": "CUPS Servers",
     "description": "Label for user custom CUPS servers."
@@ -35,14 +24,7 @@
     "message": "Enter one IP or URL per line (e.g., http://192.168.1.10:631). The extension will automatically fetch all queues from these servers.",
     "description": "Instructions for custom CUPS servers."
   },
-  "managedIppLabel": {
-    "message": "Enterprise Managed Standalone IPP Printers",
-    "description": "Label for enterprise managed IPP printers textarea."
-  },
-  "managedIppPlaceholder": {
-    "message": "(Managed standalone IPP printers)",
-    "description": "Placeholder for enterprise managed IPP printers."
-  },
+
   "userIppLabel": {
     "message": "Standalone IPP Printers",
     "description": "Label for user custom IPP printers."
@@ -67,10 +49,7 @@
     "message": "Background Sync Interval (minutes)",
     "description": "Label for sync interval selection."
   },
-  "managedByPolicyBadge": {
-    "message": "(Managed by Policy)",
-    "description": "Badge shown when a field value is locked by enterprise policy."
-  },
+
   "syncIntervalNote": {
     "message": "How often the extension checks the network for new printers. Minimum 1 minute.",
     "description": "Instruction note for background sync interval."

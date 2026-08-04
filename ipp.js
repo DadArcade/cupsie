@@ -59,9 +59,12 @@ const MEDIA_MAP = {
  * @param {string} jobName - string title of the job
  * @param {Object} cjt - Chrome Job Ticket for print options
  * @param {string} userName - the user printing this job
+ * @param {number} ippVersion - IPP protocol version
+ * @param {string} documentFormat - mime type of the document
+ * @param {string|null} compression - compression type (e.g. 'gzip')
  * @returns {ArrayBuffer}
  */
-export function buildIppRequest(operationId, requestId, targetUri, isPrintJob = false, jobName = 'Print Job', cjt = null, userName = 'Chrome User', ippVersion = 0x0200, documentFormat = 'application/pdf') {
+export function buildIppRequest(operationId, requestId, targetUri, isPrintJob = false, jobName = 'Print Job', cjt = null, userName = 'Chrome User', ippVersion = 0x0200, documentFormat = 'application/pdf', compression = null) {
   let bytes = [];
 
   function writeInt16(val) {
@@ -111,12 +114,16 @@ export function buildIppRequest(operationId, requestId, targetUri, isPrintJob = 
   // Mandatory RFC 8011 operation attributes
   writeAttribute(TAGS.charset, 'attributes-charset', 'utf-8');
   writeAttribute(TAGS.naturalLanguage, 'attributes-natural-language', 'en-us');
-  writeAttribute(TAGS.uri, 'printer-uri', targetUri);
+  const cleanUri = targetUri.split('?')[0];
+  writeAttribute(TAGS.uri, 'printer-uri', cleanUri);
 
   if (isPrintJob) {
     writeAttribute(TAGS.nameWithoutLanguage, 'job-name', jobName);
     writeAttribute(TAGS.nameWithoutLanguage, 'requesting-user-name', userName);
     writeAttribute(TAGS.mimeMediaType, 'document-format', documentFormat);
+    if (compression) {
+      writeAttribute(TAGS.keyword, 'compression', compression);
+    }
 
     // Group 2: Job Attributes
     bytes.push(TAGS.job_attributes_tag);

@@ -195,81 +195,7 @@ async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, default
 }
 
 async function restoreOptions() {
-  let managed = {};
-  if (chrome.storage && chrome.storage.managed) {
-    try {
-      managed = await chrome.storage.managed.get(['cupsServers', 'ippPrinters', 'syncInterval', 'defaultRequestingUser']) || {};
-    } catch (e) {
-      console.warn('Managed storage not available or policy not configured:', e.message);
-    }
-  }
-  await restoreUserAndLocalOptions(managed);
-}
-
-async function restoreUserAndLocalOptions(managed) {
-  const hasManaged = managed && Object.keys(managed).length > 0;
-  
-  if (hasManaged) {
-    if (managed.cupsServers && managed.cupsServers.length > 0) {
-      const el = document.getElementById('managedCupsServers');
-      if (el) el.value = managed.cupsServers.join('\n');
-      const sec = document.getElementById('managedCupsSection');
-      if (sec) sec.classList.add('visible');
-    }
-    if (managed.ippPrinters && managed.ippPrinters.length > 0) {
-      const container = document.getElementById('managedIppPrintersContainer');
-      if (container) {
-        container.innerHTML = '';
-        const fragment = document.createDocumentFragment();
-        managed.ippPrinters.forEach(printer => {
-          const norm = normalizeIppPrinter(printer);
-          if (norm) {
-            const row = document.createElement('div');
-            row.className = 'printer-row-managed';
-            
-            const urlInput = document.createElement('input');
-            urlInput.type = 'text';
-            urlInput.className = 'managed-url';
-            urlInput.value = norm.url;
-            urlInput.readOnly = true;
-            
-            const nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.className = 'managed-name';
-            nameInput.value = norm.name;
-            nameInput.readOnly = true;
-            
-            row.appendChild(urlInput);
-            row.appendChild(nameInput);
-            fragment.appendChild(row);
-          }
-        });
-        container.appendChild(fragment);
-      }
-      const sec = document.getElementById('managedIppSection');
-      if (sec) sec.classList.add('visible');
-    }
-    if (managed.syncInterval !== undefined) {
-      const syncInput = document.getElementById('syncInterval');
-      if (syncInput) {
-        syncInput.value = managed.syncInterval;
-        syncInput.disabled = true;
-      }
-      const badge = document.getElementById('managedIntervalBadge');
-      if (badge) badge.classList.add('visible');
-    }
-    if (managed.defaultRequestingUser !== undefined) {
-      const userInput = document.getElementById('defaultRequestingUser');
-      if (userInput) {
-        userInput.value = managed.defaultRequestingUser;
-        userInput.disabled = true;
-      }
-      const badge = document.getElementById('managedUserBadge');
-      if (badge) badge.classList.add('visible');
-    }
-  }
-
-  // Now query sync user configuration and local sync logs
+  // Query sync user configuration and local sync logs
   let syncItems = {};
   let localItems = {};
   try {
@@ -308,13 +234,11 @@ async function restoreUserAndLocalOptions(managed) {
     }
     addPrinterRow('', '');
   }
-  // Apply local interval value only if it's not managed by enterprise policy
-  if (items.syncInterval !== undefined && (!managed || managed.syncInterval === undefined)) {
+  if (items.syncInterval !== undefined) {
     const syncInput = document.getElementById('syncInterval');
     if (syncInput) syncInput.value = items.syncInterval;
   }
-  // Apply local requesting username value only if it's not managed by enterprise policy
-  if (items.defaultRequestingUser !== undefined && (!managed || managed.defaultRequestingUser === undefined)) {
+  if (items.defaultRequestingUser !== undefined) {
     const userInput = document.getElementById('defaultRequestingUser');
     if (userInput) userInput.value = items.defaultRequestingUser;
   }
@@ -330,25 +254,8 @@ async function restoreUserAndLocalOptions(managed) {
   loadedCredentials = items.deviceCredentials || {};
   renderStoredCredentials(loadedCredentials);
 
-  // Check if connection permissions for all configured and managed hosts are available
+  // Check if connection permissions for all configured hosts are available
   const uniqueOrigins = new Set();
-  if (managed) {
-    if (managed.cupsServers) {
-      managed.cupsServers.forEach(url => {
-        const origin = getMatchPattern(url);
-        if (origin) uniqueOrigins.add(origin);
-      });
-    }
-    if (managed.ippPrinters) {
-      managed.ippPrinters.forEach(p => {
-        const norm = normalizeIppPrinter(p);
-        if (norm) {
-          const origin = getMatchPattern(norm.url);
-          if (origin) uniqueOrigins.add(origin);
-        }
-      });
-    }
-  }
   if (items.cupsServers) {
     items.cupsServers.forEach(url => {
       const origin = getMatchPattern(url);

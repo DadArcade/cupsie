@@ -278,30 +278,7 @@
       box-shadow: none;
     }
 
-    .printer-row-managed {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 6px;
-      align-items: center;
-    }
 
-    .printer-row-managed input[type="text"] {
-      background-color: var(--bg);
-      color: var(--text-muted);
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 13.5px;
-      box-sizing: border-box;
-    }
-
-    .printer-row-managed .managed-url {
-      flex: 2;
-    }
-
-    .printer-row-managed .managed-name {
-      flex: 1;
-    }
 
     .credentials-row {
       display: flex;
@@ -345,26 +322,7 @@
       display: block;
     }
 
-    .managed-section {
-      margin-bottom: 15px;
-      display: none;
-    }
 
-    .managed-section.visible {
-      display: block;
-    }
-
-    .managed-label {
-      color: var(--text-muted);
-    }
-
-    .managed-textarea {
-      height: 60px;
-    }
-
-    .managed-container {
-      margin-bottom: 10px;
-    }
 
     .printer-container {
       margin-bottom: 12px;
@@ -394,17 +352,7 @@
       font-weight: bold;
     }
 
-    .managed-badge {
-      display: none;
-      color: var(--success);
-      font-weight: 500;
-      font-size: 12px;
-      margin-left: 10px;
-    }
 
-    .managed-badge.visible {
-      display: inline;
-    }
 
     .input--wide {
       width: 250px;
@@ -473,17 +421,7 @@
 <body>
   <h1 data-i18n="optionsPageHeader">Printer Provider Configuration</h1>
 
-  <p class="note note--intro" data-i18n="managedPoliciesNote">
-    Enterprise managed policies are force-added alongside your custom configuration.
-  </p>
-
   <div class="section">
-    <div id="managedCupsSection" class="managed-section">
-      <label class="managed-label" data-i18n="managedCupsLabel">Enterprise Managed CUPS Servers</label>
-      <textarea id="managedCupsServers" class="managed-textarea" readonly
-        data-i18n-placeholder="managedCupsPlaceholder" placeholder="(Managed CUPS servers)"></textarea>
-    </div>
-
     <label for="cupsServers" data-i18n="userCupsLabel">User CUPS Servers</label>
     <p class="note" data-i18n="userCupsNote">Enter one IP or URL per line (e.g., http://192.168.1.10:631). The extension
       will automatically fetch all queues from these servers.</p>
@@ -491,11 +429,6 @@
   </div>
 
   <div class="section">
-    <div id="managedIppSection" class="managed-section">
-      <label class="managed-label" data-i18n="managedIppLabel">Enterprise Managed Standalone IPP Printers</label>
-      <div id="managedIppPrintersContainer" class="managed-container"></div>
-    </div>
-
     <label for="ippPrintersContainer" data-i18n="userIppLabel">User Standalone IPP Printers</label>
     <p class="note" data-i18n="userIppNote">Enter direct HTTP/HTTPS or IPP/IPPS endpoint URLs and optional display names for your
       standalone printers (e.g., ipp://192.168.1.50:631/ipp/print or http://192.168.1.50:631/ipp/print).</p>
@@ -514,16 +447,13 @@
   <div class="section">
     <label for="defaultRequestingUser">
       <span data-i18n="defaultRequestingUserLabel">Default Requesting Username</span>
-      <span id="managedUserBadge" class="managed-badge" data-i18n="managedByPolicyBadge">(Managed by Policy)</span>
     </label>
     <p class="note" data-i18n="defaultRequestingUserNote">The username passed to printers that do not require authentication. If left blank, the logged-in user profile name will be used.</p>
     <input type="text" id="defaultRequestingUser" class="text-input input--wide" data-i18n-placeholder="defaultRequestingUserPlaceholder" placeholder="e.g., john.doe">
   </div>
 
   <div class="section">
-    <label for="syncInterval"><span data-i18n="syncIntervalLabel">Background Sync Interval (minutes)</span> <span
-        id="managedIntervalBadge" class="managed-badge"
-        data-i18n="managedByPolicyBadge">(Managed by Policy)</span></label>
+    <label for="syncInterval"><span data-i18n="syncIntervalLabel">Background Sync Interval (minutes)</span></label>
     <p class="note" data-i18n="syncIntervalNote">How often the extension checks the network for new printers. Minimum 1
       minute.</p>
     <input type="number" id="syncInterval" min="1" max="1440" value="1440">

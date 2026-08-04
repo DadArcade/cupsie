@@ -90,6 +90,7 @@ import { retry, notifyUserError, getHostname, fetchWithTimeout } from './errorHa
 
 const BACKGROUND_SYNC_ALARM = 'SYNC_PRINTERS_ALARM';
 const DEFAULT_SYNC_INTERVAL_MINUTES = 1440;
+const PRINT_JOB_TIMEOUT_MS = 120000;
 
 /**
  * Converts an http(s):// URL to its ipp(s):// equivalent for use
@@ -332,23 +333,15 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
 
 
 
-// Helper to update background alarm with active sync interval (managed policy wins)
+// Helper to update background alarm with active sync interval
 async function updateAlarm() {
-  let managedInterval;
-  try {
-    const managedItems = await chrome.storage.managed.get(['syncInterval']);
-    managedInterval = managedItems.syncInterval;
-  } catch (e) {
-    // Managed storage not supported or not set
-  }
-
   let period = DEFAULT_SYNC_INTERVAL_MINUTES;
   try {
     const syncItems = await chrome.storage.sync.get(['syncInterval']);
-    period = managedInterval || syncItems.syncInterval || DEFAULT_SYNC_INTERVAL_MINUTES;
+    period = syncItems.syncInterval || DEFAULT_SYNC_INTERVAL_MINUTES;
   } catch (e) {
     console.warn('Failed to retrieve syncInterval from storage.sync, falling back to default:', e);
-    period = managedInterval || DEFAULT_SYNC_INTERVAL_MINUTES;
+    period = DEFAULT_SYNC_INTERVAL_MINUTES;
   }
 
   try {
@@ -374,20 +367,6 @@ async function getUsername() {
     }
   } catch (e) {
     console.warn('Failed to read defaultRequestingUser from storage.sync:', e);
-  }
-
-  try {
-    if (chrome.storage && chrome.storage.managed) {
-      const managed = await chrome.storage.managed.get(['defaultRequestingUser']);
-      if (managed && managed.defaultRequestingUser) {
-        const trimmed = managed.defaultRequestingUser.trim();
-        if (trimmed) {
-          return trimmed;
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('Failed to read defaultRequestingUser from storage.managed:', e);
   }
 
   return 'Chrome User';
@@ -511,7 +490,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 const CONFIG_KEYS = new Set(['cupsServers', 'ippPrinters', 'syncInterval', 'defaultRequestingUser']);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== 'sync' && areaName !== 'managed') return;
+  if (areaName !== 'sync') return;
 
   if (changes.syncInterval) {
     updateAlarm().catch(e => console.error('Failed to update sync alarm after config change:', e));
@@ -573,13 +552,6 @@ async function syncPrinters(onProgress, isInteractive = false) {
     const username = await getUsername();
     console.log(`Syncing printers for user: "${username || 'anonymous'}"`);
 
-    let managedItems = {};
-    try {
-      managedItems = await chrome.storage.managed.get(['cupsServers', 'ippPrinters']);
-    } catch (e) {
-      // Managed storage not available or empty
-    }
-
     let syncItems = {};
     try {
       syncItems = await chrome.storage.sync.get(['cupsServers', 'ippPrinters']);
@@ -587,16 +559,12 @@ async function syncPrinters(onProgress, isInteractive = false) {
       console.warn('Failed to retrieve printers from storage.sync:', e);
     }
 
-    const managedCups = managedItems.cupsServers || [];
-    const syncCups = syncItems.cupsServers || [];
-    const cupsServers = [...new Set([...managedCups, ...syncCups])];
-
-    const managedIpp = managedItems.ippPrinters || [];
+    const cupsServers = syncItems.cupsServers || [];
     const syncIpp = syncItems.ippPrinters || [];
 
-    // Normalize and deduplicate by URL (policy values take precedence)
+    // Normalize and deduplicate by URL
     const ippPrintersMap = new Map();
-    for (const item of [...managedIpp, ...syncIpp]) {
+    for (const item of syncIpp) {
       const norm = normalizeIppPrinter(item);
       if (norm && !ippPrintersMap.has(norm.url)) {
         ippPrintersMap.set(norm.url, norm);
@@ -1225,26 +1193,47 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
 
     const docFormat = printJob.contentType || 'application/pdf';
 
+    let compression = null;
+    try {
+      const url = new URL(toHttpScheme(printJob.printerId));
+      if (url.searchParams.get('compression') === 'gzip') {
+        compression = 'gzip';
+      }
+    } catch (e) {
+      console.warn('Failed to parse printer URL for compression query parameter:', e);
+    }
+
+    // Retrieve the document data to send, avoiding loading the entire file into memory if not compressing
+    let bodyData;
+    if (compression === 'gzip') {
+      try {
+        const cs = new CompressionStream('gzip');
+        const compressedStream = printJob.document.stream().pipeThrough(cs);
+        bodyData = await new Response(compressedStream).arrayBuffer();
+        console.log(`Compressed print job document using gzip. Original size: ${printJob.document.size} bytes, compressed size: ${bodyData.byteLength} bytes.`);
+      } catch (err) {
+        console.error('Failed to gzip compress print job document:', err);
+        compression = null;
+        bodyData = printJob.document;
+      }
+    } else {
+      bodyData = printJob.document;
+    }
+
     // Construct the IPP Job Attributes header based on the selected CDD options
-    const ippHeader = buildIppRequest(IPP_OPS.Print_Job, 4, toIppScheme(printJob.printerId), true, printJob.title, printJob.ticket, userName, ippVersion, docFormat);
+    const ippHeader = buildIppRequest(IPP_OPS.Print_Job, 4, toIppScheme(printJob.printerId), true, printJob.title, printJob.ticket, userName, ippVersion, docFormat, compression);
 
-    // Retrieve the actual document bytes
-    const documentBuffer = await printJob.document.arrayBuffer();
-
-    // Combine the IPP Header payload and the PDF document directly sequentially
+    // Combine the IPP Header payload and the document directly sequentially using a Blob
     const ippBytes = new Uint8Array(ippHeader);
-    const docBytes = new Uint8Array(documentBuffer);
-    const payload = new Uint8Array(ippBytes.length + docBytes.length);
-    payload.set(ippBytes, 0);
-    payload.set(docBytes, ippBytes.length);
+    const payloadBlob = new Blob([ippBytes, bodyData], { type: 'application/ipp' });
 
     // Submit the print job to the endpoint
     const submitPrintJob = async () => {
       const res = await fetchWithAuth(printJob.printerId, {
         method: 'POST',
         headers: { 'Content-Type': 'application/ipp' },
-        body: new Blob([payload], { type: 'application/ipp' })
-      }, 30000);
+        body: payloadBlob
+      }, PRINT_JOB_TIMEOUT_MS);
       if (!res.ok && res.status >= 500) {
         throw new Error(`HTTP ${res.status}`);
       }

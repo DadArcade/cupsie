@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extName__",
-  "version": "1.12.3",
+  "version": "1.12.5",
   "default_locale": "en",
   "description": "__MSG_extDesc__",
   "icons": {
@@ -13,7 +13,8 @@
   "permissions": [
     "printerProvider",
     "storage",
-    "alarms"
+    "alarms",
+    "offscreen"
   ],
   "optional_host_permissions": [
     "*://*/*"

@@ -88,9 +88,48 @@ import { buildCDD } from './cdd.js';
 import { retry, notifyUserError, getHostname, fetchWithTimeout } from './errorHandler.js';
 
 
+// --- Service Worker Keep-Alive Management via Offscreen Document ---
+let keepAliveCount = 0;
+
+async function startKeepAlive() {
+  keepAliveCount++;
+  if (keepAliveCount === 1) {
+    try {
+      await chrome.offscreen.createDocument({
+        url: 'offscreen.html',
+        reasons: ['IFRAME_SCRIPTING'],
+        justification: 'Keep service worker active for print job transfer'
+      });
+      console.log('[keep-alive] Offscreen document created.');
+    } catch (err) {
+      console.error('[keep-alive] Failed to create offscreen document:', err);
+    }
+  }
+}
+
+async function stopKeepAlive() {
+  keepAliveCount = Math.max(0, keepAliveCount - 1);
+  if (keepAliveCount === 0) {
+    try {
+      await chrome.offscreen.closeDocument();
+      console.log('[keep-alive] Offscreen document closed.');
+    } catch (err) {
+      console.error('[keep-alive] Failed to close offscreen document:', err);
+    }
+  }
+}
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === 'keepAlive') {
+    port.onMessage.addListener((message) => {
+      // Periodic ping from offscreen keeps the worker from going idle
+    });
+  }
+});
+
 const BACKGROUND_SYNC_ALARM = 'SYNC_PRINTERS_ALARM';
 const DEFAULT_SYNC_INTERVAL_MINUTES = 1440;
-const PRINT_JOB_TIMEOUT_MS = 120000;
+const PRINT_JOB_TIMEOUT_MS = 600000;
 
 /**
  * Converts an http(s):// URL to its ipp(s):// equivalent for use
@@ -112,6 +151,16 @@ function toHttpScheme(url) {
   if (/^ipps:\/\//i.test(url)) return url.replace(/^ipps:\/\//i, 'https://');
   if (/^ipp:\/\//i.test(url)) return url.replace(/^ipp:\/\//i, 'http://');
   return url;
+}
+
+/**
+ * Helper to format byte sizes into a human-readable string.
+ */
+function formatBytes(bytes) {
+  if (typeof bytes !== 'number' || isNaN(bytes)) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1048576).toFixed(1)} MB`;
 }
 
 // --- Printer Authentication Helpers ---
@@ -1150,6 +1199,7 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
 
 chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) => {
   console.log(`Print job requested for: ${printJob.printerId}`);
+  await startKeepAlive();
   try {
     const storage = await chrome.storage.local.get(['ignoredAuthDevices']);
     const ignored = storage.ignoredAuthDevices || {};
@@ -1193,46 +1243,18 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
 
     const docFormat = printJob.contentType || 'application/pdf';
 
-    let compression = null;
-    try {
-      const url = new URL(toHttpScheme(printJob.printerId));
-      if (url.searchParams.get('compression') === 'gzip') {
-        compression = 'gzip';
-      }
-    } catch (e) {
-      console.warn('Failed to parse printer URL for compression query parameter:', e);
-    }
-
-    // Retrieve the document data to send, avoiding loading the entire file into memory if not compressing
-    let bodyData;
-    if (compression === 'gzip') {
-      try {
-        const cs = new CompressionStream('gzip');
-        const compressedStream = printJob.document.stream().pipeThrough(cs);
-        bodyData = await new Response(compressedStream).arrayBuffer();
-        console.log(`Compressed print job document using gzip. Original size: ${printJob.document.size} bytes, compressed size: ${bodyData.byteLength} bytes.`);
-      } catch (err) {
-        console.error('Failed to gzip compress print job document:', err);
-        compression = null;
-        bodyData = printJob.document;
-      }
-    } else {
-      bodyData = printJob.document;
-    }
-
     // Construct the IPP Job Attributes header based on the selected CDD options
-    const ippHeader = buildIppRequest(IPP_OPS.Print_Job, 4, toIppScheme(printJob.printerId), true, printJob.title, printJob.ticket, userName, ippVersion, docFormat, compression);
-
-    // Combine the IPP Header payload and the document directly sequentially using a Blob
+    const ippHeader = buildIppRequest(IPP_OPS.Print_Job, 4, toIppScheme(printJob.printerId), true, printJob.title, printJob.ticket, userName, ippVersion, docFormat, null);
     const ippBytes = new Uint8Array(ippHeader);
-    const payloadBlob = new Blob([ippBytes, bodyData], { type: 'application/ipp' });
+    const payloadBody = new Blob([ippBytes, printJob.document], { type: 'application/ipp' });
+    const headers = { 'Content-Type': 'application/ipp' };
 
     // Submit the print job to the endpoint
     const submitPrintJob = async () => {
       const res = await fetchWithAuth(printJob.printerId, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/ipp' },
-        body: payloadBlob
+        headers: headers,
+        body: payloadBody
       }, PRINT_JOB_TIMEOUT_MS);
       if (!res.ok && res.status >= 500) {
         throw new Error(`HTTP ${res.status}`);
@@ -1240,11 +1262,18 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
       return res;
     };
 
+    const docSize = printJob.document ? printJob.document.size : 0;
+    const payloadSize = payloadBody.size;
+    const formattedDocSize = formatBytes(docSize);
+    const formattedPayloadSize = formatBytes(payloadSize);
+    console.log(`[onPrintRequested] Submitting print job "${printJob.title}" to ${printJob.printerId}. Document size: ${formattedDocSize}, IPP payload size: ${formattedPayloadSize}...`);
     const response = await retry(submitPrintJob, [], { retries: 2, delay: 1500, url: printJob.printerId });
+    console.log(`[onPrintRequested] Submit print job returned. Ok: ${response.ok}, Status: ${response.status}`);
 
     if (response.ok) {
       await clearDeviceAuthRequired(printJob.printerId);
       const contentType = response.headers.get('Content-Type') || '';
+      console.log(`[onPrintRequested] Content-Type: ${contentType}`);
       if (contentType && !contentType.includes('application/ipp')) {
         console.warn(`Print job response was not IPP: ${contentType}`);
         const text = await response.text();
@@ -1257,18 +1286,24 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
         return;
       }
 
+      console.log(`[onPrintRequested] Reading response body arrayBuffer...`);
       const responseBuffer = await response.arrayBuffer();
+      console.log(`[onPrintRequested] Response buffer size: ${responseBuffer.byteLength} bytes.`);
       const parsed = parseIppResponse(responseBuffer);
+      console.log(`[onPrintRequested] Parsed IPP status code: 0x${parsed.statusCode.toString(16).padStart(4, '0')}`);
 
       // IPP status 0x0000–0x00FF = successful (may include minor warnings)
       if (parsed.statusCode >= 0x0000 && parsed.statusCode <= 0x00FF) {
         console.log(`Print job dispatched successfully: ${printJob.title}`);
+        console.log(`[onPrintRequested] Invoking callback('OK')...`);
         callback('OK');
+        console.log(`[onPrintRequested] Callback('OK') invoked.`);
       } else {
         console.warn(`Print Job accepted by server but returned warning status: ${parsed.statusCode}`);
         const msgKey = IPP_STATUS_MESSAGES[parsed.statusCode];
         const reason = msgKey ? chrome.i18n.getMessage(msgKey) : chrome.i18n.getMessage('ipp_error_unknown', [`0x${parsed.statusCode.toString(16).padStart(4, '0')}`]);
         showPrintFailureNotification(printJob.title, reason);
+        console.log(`[onPrintRequested] Invoking callback('FAILED')...`);
         callback('FAILED');
       }
     } else {
@@ -1324,6 +1359,8 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
     console.error('Error securely sending print job to IPP endpoint:', e);
     showPrintFailureNotification(printJob.title, e.message || chrome.i18n.getMessage('errConnectionFailed'));
     callback('FAILED');
+  } finally {
+    await stopKeepAlive();
   }
 });
 

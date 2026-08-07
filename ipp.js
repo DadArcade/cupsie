@@ -340,7 +340,8 @@ export function parseIppResponse(arrayBuffer) {
     version,
     statusCode,
     requestId,
-    groups: [] // Array of { tag, attributes: {} }
+    groups: [], // Array of { tag, attributes: {} }
+    complete: false
   };
 
   let currentGroup = null;
@@ -351,7 +352,10 @@ export function parseIppResponse(arrayBuffer) {
     if (offset >= view.byteLength) break;
     const tag = view.getUint8(offset++);
 
-    if (tag === TAGS.end_of_attributes_tag) break;
+    if (tag === TAGS.end_of_attributes_tag) {
+      result.complete = true;
+      break;
+    }
 
     // All group delimiter tags are 0x01–0x0e (operation, job, printer, etc.)
     if (tag >= 0x01 && tag <= 0x0e) {

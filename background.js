@@ -138,7 +138,7 @@ const PRINT_JOB_TIMEOUT_MS = 600000;
  * where printer-uri uses the http:// scheme (RFC 8011 §4.1.5).
  * The fetch() transport URL is unaffected and stays as http://.
  */
-function toIppScheme(url) {
+export function toIppScheme(url) {
   if (/^https:\/\//i.test(url)) return url.replace(/^https:\/\//i, 'ipps://');
   if (/^http:\/\//i.test(url)) return url.replace(/^http:\/\//i, 'ipp://');
   return url;
@@ -148,7 +148,7 @@ function toIppScheme(url) {
  * Converts an ipp(s):// URL back to http(s):// for use in fetch().
  * Chrome's fetch API strictly rejects the ipp:// scheme.
  */
-function toHttpScheme(url) {
+export function toHttpScheme(url) {
   if (/^ipps:\/\//i.test(url)) return url.replace(/^ipps:\/\//i, 'https://');
   if (/^ipp:\/\//i.test(url)) return url.replace(/^ipp:\/\//i, 'http://');
   return url;
@@ -157,7 +157,7 @@ function toHttpScheme(url) {
 /**
  * Helper to format byte sizes into a human-readable string.
  */
-function formatBytes(bytes) {
+export function formatBytes(bytes) {
   if (typeof bytes !== 'number' || isNaN(bytes)) return '0 B';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -422,7 +422,7 @@ async function getUsername() {
   return 'Chrome User';
 }
 
-function isUserAllowed(username, allowedList, deniedList) {
+export function isUserAllowed(username, allowedList, deniedList) {
   if (!username) return true;
   const lowerUser = username.toLowerCase();
 

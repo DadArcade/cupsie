@@ -71,8 +71,12 @@ export async function retry(operation, args = [], { retries = 3, delay = 1000, u
   throw lastError;
 }
 
-
-
+/**
+ * Enriches network error objects with diagnostic details (offline status, host permissions, TLS warnings).
+ * @param {Error|string} error - The original error object or message.
+ * @param {string} url - Target URL that failed.
+ * @returns {Promise<Error|string>} Enriched error object with added diagnostics.
+ */
 export async function enrichNetworkError(error, url) {
   if (!url) return error;
 

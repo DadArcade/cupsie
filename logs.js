@@ -45,6 +45,7 @@ function renderLogs(logs) {
 
   // Show newest logs at the top
   const sortedLogs = [...logs].reverse();
+  const fragment = document.createDocumentFragment();
 
   for (const log of sortedLogs) {
     const li = document.createElement('li');
@@ -68,8 +69,10 @@ function renderLogs(logs) {
     li.appendChild(timeDiv);
     li.appendChild(levelDiv);
     li.appendChild(messageDiv);
-    list.appendChild(li);
+    fragment.appendChild(li);
   }
+  
+  list.appendChild(fragment);
 }
 
 async function clearLogs() {

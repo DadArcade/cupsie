@@ -1,0 +1,9 @@
+{
+  "name": "cupsie-tests",
+  "version": "1.0.0",
+  "description": "Tests for CUPSie",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

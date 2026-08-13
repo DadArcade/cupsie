@@ -2,9 +2,9 @@
 
 ## Install
 
-Open the [Cupsie Extension](https://chromewebstore.google.com/detail/dekecaodhfljnecmmkenlmjfcbmdokno/) on the Chrome Web Store and click the **Add to Chrome** button.
+Open the [Cupsie Extension](https://chromewebstore.google.com/detail/dekecaodhfljnecmmkenlmjfcbmdokno/) on the Chrome Web Store and click the **Add to Chrome** button. Once installed, right-click it for **Options** and enter the address of your CUPS server.
 
-Cupsie makes printing from your Chrome browser simple. You just add a CUPS server, and Cupsie automatically pulls all the shared printers from it so you can print right away. 
+Once you added a CUPS server, Cupsie will automatically pull all the shared printers from it so you can print right away.
 
 You do not need to install any system printer drivers, and it works perfectly in the Chrome browser on ChromeOS, Linux, macOS, and Windows.
 

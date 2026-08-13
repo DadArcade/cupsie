@@ -1,4 +1,4 @@
-# Cupsie Prints to CUPS servers from Chrome browser
+# Cupsie prints to CUPS servers from the Chrome browser
 
 ## Install
 

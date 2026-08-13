@@ -49,3 +49,7 @@ For more use cases, see the detailed [User Guide](https://github.com/DadArcade/c
 By default, the extension has access to nothing and does not send any data to external servers. It will request network permission directly from you when adding printers.
 
 For more details, see the full [Privacy Policy](privacy_policy.md).
+
+## Enterprise version
+
+For deploying to many users using Chrome enterprise policies, check out [Cupsie Corp](https://github.com/DadArcade/CupsieCorp).

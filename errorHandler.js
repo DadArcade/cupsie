@@ -1,12 +1,6 @@
 
-/**
- * Retries an asynchronous operation with exponential backoff.
- * @param {Function} operation - The async function to execute.
- * @param {Array} args - Arguments to pass to the function.
- * @param {Object} options - Retry configuration.
- * @param {number} options.retries - Maximum retry attempts (default: 3).
- * @param {number} options.delay - Initial delay in ms (default: 1000).
- */
+import { getMatchPattern } from './utils.js';
+
 /**
  * Safely extracts the hostname from a URL.
  */
@@ -46,6 +40,14 @@ export async function fetchWithTimeout(resource, options = {}, timeoutMs = 8000)
   }
 }
 
+/**
+ * Retries an asynchronous operation with exponential backoff.
+ * @param {Function} operation - The async function to execute.
+ * @param {Array} args - Arguments to pass to the function.
+ * @param {Object} options - Retry configuration.
+ * @param {number} options.retries - Maximum retry attempts (default: 3).
+ * @param {number} options.delay - Initial delay in ms (default: 1000).
+ */
 export async function retry(operation, args = [], { retries = 3, delay = 1000, url = '' } = {}) {
   if (typeof operation !== 'function') {
     throw new TypeError('operation must be a function');
@@ -69,29 +71,7 @@ export async function retry(operation, args = [], { retries = 3, delay = 1000, u
   throw lastError;
 }
 
-function getMatchPattern(urlStr) {
-  let u = urlStr.trim();
-  if (!u) return null;
 
-  // Add schema fallback if user entered a raw IP/domain
-  if (!/^[a-zA-Z0-9+-.]+:\/\//.test(u)) {
-    u = 'http://' + u;
-  }
-
-  // Convert IPP schemas to HTTP/S to match standard URL parsing
-  if (/^ipps:\/\//i.test(u)) {
-    u = u.replace(/^ipps:\/\//i, 'https://');
-  } else if (/^ipp:\/\//i.test(u)) {
-    u = u.replace(/^ipp:\/\//i, 'http://');
-  }
-
-  try {
-    const url = new URL(u);
-    return `*://${url.hostname}/*`;
-  } catch (e) {
-    return null;
-  }
-}
 
 export async function enrichNetworkError(error, url) {
   if (!url) return error;

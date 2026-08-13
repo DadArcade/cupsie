@@ -86,6 +86,7 @@ console.error = function (...args) {
 import { buildIppRequest, parseIppResponse, IPP_OPS, TAGS } from './ipp.js';
 import { buildCDD } from './cdd.js';
 import { retry, notifyUserError, getHostname, fetchWithTimeout } from './errorHandler.js';
+import { normalizeIppPrinter } from './utils.js';
 
 
 // --- Service Worker Keep-Alive Management via Offscreen Document ---
@@ -567,15 +568,6 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
 
 // Caching & Polling Logic
-function normalizeIppPrinter(p) {
-  if (typeof p === 'string') {
-    return { url: p, name: '' };
-  }
-  if (p && typeof p === 'object' && p.url) {
-    return { url: p.url, name: p.name || '' };
-  }
-  return null;
-}
 
 let activeSyncPromise = null;
 let isCurrentSyncInteractive = false;
@@ -623,8 +615,8 @@ async function syncPrinters(onProgress, isInteractive = false) {
 
     let ignoredAuthDevices = {};
     try {
-      const storage = await chrome.storage.local.get(['ignoredAuthDevices']);
-      ignoredAuthDevices = storage.ignoredAuthDevices || {};
+      const ignoredStorage = await chrome.storage.local.get(['ignoredAuthDevices']);
+      ignoredAuthDevices = ignoredStorage.ignoredAuthDevices || {};
     } catch (e) {
       console.warn('Failed to load ignoredAuthDevices:', e);
     }
@@ -803,8 +795,8 @@ async function syncPrinters(onProgress, isInteractive = false) {
               // Check credentials if they are stored for this printer
               let isAuthorized = true;
               try {
-                const storage = await chrome.storage.local.get(['deviceCredentials']);
-                const credentials = storage.deviceCredentials || {};
+                const credStorage = await chrome.storage.local.get(['deviceCredentials']);
+                const credentials = credStorage.deviceCredentials || {};
                 const creds = credentials[testUrl] || credentials[originalUrl];
                 if (creds) {
                   console.log(`  Verifying credentials for ${testUrl} using Validate-Job …`);
@@ -899,7 +891,7 @@ async function syncPrinters(onProgress, isInteractive = false) {
 
         await clearDeviceAuthRequired(successUrl);
 
-        const pg = finalParsed.groups.find(g => g.tag === 4) || { attributes: {} };
+        const pg = finalParsed.groups.find(g => g.tag === TAGS.printer_attributes_tag) || { attributes: {} };
         const allowedList = pg.attributes['requesting-user-name-allowed'];
         const deniedList = pg.attributes['requesting-user-name-denied'];
         const name = printer.name || pg.attributes['printer-info']?.[0] || pg.attributes['printer-name']?.[0] || successUrl;
@@ -1003,8 +995,8 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
   console.log(`Capabilities requested for: ${printerId}`);
 
   try {
-    const storage = await chrome.storage.local.get(['ignoredAuthDevices']);
-    const ignored = storage.ignoredAuthDevices || {};
+    const capStorage = await chrome.storage.local.get(['ignoredAuthDevices', 'capabilitiesCache']);
+    const ignored = capStorage.ignoredAuthDevices || {};
     if (ignored[printerId]) {
       console.log(`Capabilities request skipped: device is ignored by user due to auth requirements: ${printerId}`);
       callback(buildCDD({}));
@@ -1015,8 +1007,7 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
 
     let cachedEntry = null;
     try {
-      const storage = await chrome.storage.local.get(['capabilitiesCache']);
-      const cache = storage.capabilitiesCache || {};
+      const cache = capStorage.capabilitiesCache || {};
       cachedEntry = cache[printerId];
 
       if (cachedEntry && cachedEntry.timestamp && (Date.now() - cachedEntry.timestamp < 24 * 60 * 60 * 1000)) {
@@ -1105,7 +1096,7 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
         }
 
         if (isSuccess) {
-          const pg = parsed.groups.find(g => g.tag === 4) || { attributes: {} };
+          const pg = parsed.groups.find(g => g.tag === TAGS.printer_attributes_tag) || { attributes: {} };
 
           const allowedList = pg.attributes['requesting-user-name-allowed'];
           const deniedList = pg.attributes['requesting-user-name-denied'];
@@ -1116,8 +1107,8 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
 
             // Cache the denial so we can prevent printing pre-print submission
             try {
-              const storage = await chrome.storage.local.get(['capabilitiesCache']);
-              const cache = storage.capabilitiesCache || {};
+              const cacheStorage = await chrome.storage.local.get(['capabilitiesCache']);
+              const cache = cacheStorage.capabilitiesCache || {};
               cache[printerId] = {
                 cdd: buildCDD({}),
                 timestamp: Date.now(),
@@ -1139,8 +1130,8 @@ chrome.printerProvider.onGetCapabilityRequested.addListener(async (printerId, ca
 
           // Save to cache
           try {
-            const storage = await chrome.storage.local.get(['capabilitiesCache']);
-            const cache = storage.capabilitiesCache || {};
+            const cacheStorage = await chrome.storage.local.get(['capabilitiesCache']);
+            const cache = cacheStorage.capabilitiesCache || {};
             cache[printerId] = {
               cdd: cdd,
               timestamp: Date.now(),
@@ -1201,8 +1192,8 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
   console.log(`Print job requested for: ${printJob.printerId}`);
   await startKeepAlive();
   try {
-    const storage = await chrome.storage.local.get(['ignoredAuthDevices']);
-    const ignored = storage.ignoredAuthDevices || {};
+    const printStorage = await chrome.storage.local.get(['ignoredAuthDevices', 'capabilitiesCache', 'cachedPrinters']);
+    const ignored = printStorage.ignoredAuthDevices || {};
     if (ignored[printJob.printerId]) {
       console.warn(`Print job blocked: device is ignored by user due to auth requirements: ${printJob.printerId}`);
       showPrintFailureNotification(printJob.title, chrome.i18n.getMessage('errHttpUnauthorized'));
@@ -1216,8 +1207,7 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
     // Check capabilitiesCache for access control list and version before printing
     let ippVersion = 0x0200;
     try {
-      const storage = await chrome.storage.local.get(['capabilitiesCache', 'cachedPrinters']);
-      const cache = storage.capabilitiesCache || {};
+      const cache = printStorage.capabilitiesCache || {};
       const cachedEntry = cache[printJob.printerId];
       if (cachedEntry) {
         if (!isUserAllowed(username, cachedEntry.allowedList, cachedEntry.deniedList)) {
@@ -1231,7 +1221,7 @@ chrome.printerProvider.onPrintRequested.addListener(async (printJob, callback) =
           ippVersion = cachedEntry.ippVersion;
         }
       } else {
-        const cachedPrinters = storage.cachedPrinters || [];
+        const cachedPrinters = printStorage.cachedPrinters || [];
         const match = cachedPrinters.find(p => p.id === printJob.printerId);
         if (match && match.ippVersion) {
           ippVersion = match.ippVersion;

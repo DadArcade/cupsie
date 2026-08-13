@@ -132,9 +132,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     try {
-      const storage = await chrome.storage.local.get(['ignoredAuthDevices', 'authRequiredDevices']);
-      const currentIgnored = storage.ignoredAuthDevices || {};
-      const currentAuthRequired = storage.authRequiredDevices || {};
+      const saveStorage = await chrome.storage.local.get(['ignoredAuthDevices', 'authRequiredDevices']);
+      const currentIgnored = saveStorage.ignoredAuthDevices || {};
+      const currentAuthRequired = saveStorage.authRequiredDevices || {};
 
       // Merge new ignored devices
       const newIgnored = { ...currentIgnored, ...ignoredDevices };
@@ -182,8 +182,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Read authRequiredDevices again to check if credentials worked
     try {
-      const storage = await chrome.storage.local.get(['authRequiredDevices']);
-      const currentAuthRequired = storage.authRequiredDevices || {};
+      const verifyStorage = await chrome.storage.local.get(['authRequiredDevices']);
+      const currentAuthRequired = verifyStorage.authRequiredDevices || {};
 
       // Check if any of the devices we just saved credentials for are STILL marked as requiring authentication
       const stillFailing = deviceUrls.some(url => currentAuthRequired[url] !== undefined);

@@ -1,3 +1,5 @@
+import { normalizeIppPrinter, getMatchPattern } from './utils.js';
+
 let loadedCredentials = {};
 let statusTimer = null;
 
@@ -48,31 +50,7 @@ function validateAndFormatUrl(urlStr) {
   return u;
 }
 
-function getMatchPattern(urlStr) {
-  let u = urlStr.trim();
-  if (!u) return null;
 
-  // Add schema fallback if user entered a raw IP/domain
-  if (!/^[a-zA-Z0-9+-.]+:\/\//.test(u)) {
-    u = 'http://' + u;
-  }
-  
-  // Convert IPP schemas to HTTP/S to match standard URL parsing
-  if (/^ipps:\/\//i.test(u)) {
-    u = u.replace(/^ipps:\/\//i, 'https://');
-  } else if (/^ipp:\/\//i.test(u)) {
-    u = u.replace(/^ipp:\/\//i, 'http://');
-  }
-
-  try {
-    const url = new URL(u);
-    // Requesting *://hostname/* matches http/https and any port (like :631)
-    return `*://${url.hostname}/*`;
-  } catch (e) {
-    console.error('Failed to parse match pattern from URL:', urlStr, e);
-    return null;
-  }
-}
 
 function saveOptions() {
   document.getElementById('saveBtn').disabled = true;
@@ -294,7 +272,12 @@ function renderSyncResults(results) {
   list.innerHTML = '';
   
   if (!results || Object.keys(results).length === 0) {
-    list.innerHTML = `<li><span class="note">${chrome.i18n.getMessage('noPrintersConfigured')}</span></li>`;
+    const li = document.createElement('li');
+    const span = document.createElement('span');
+    span.className = 'note';
+    span.textContent = chrome.i18n.getMessage('noPrintersConfigured');
+    li.appendChild(span);
+    list.appendChild(li);
     return;
   }
   
@@ -319,15 +302,7 @@ function renderSyncResults(results) {
   list.appendChild(fragment);
 }
 
-function normalizeIppPrinter(p) {
-  if (typeof p === 'string') {
-    return { url: p, name: '' };
-  }
-  if (p && typeof p === 'object' && p.url) {
-    return { url: p.url, name: p.name || '' };
-  }
-  return null;
-}
+
 
 function addPrinterRow(url = '', name = '', targetParent = null) {
   const container = targetParent || document.getElementById('ippPrintersContainer');

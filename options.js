@@ -76,6 +76,7 @@ function getMatchPattern(urlStr) {
 
 function saveOptions() {
   document.getElementById('saveBtn').disabled = true;
+  const warningBanner = document.getElementById('permissionsWarning');
   const cupsServers = document.getElementById('cupsServers').value
                         .split('\n')
                         .map(validateAndFormatUrl)
@@ -130,12 +131,10 @@ function saveOptions() {
         showStatus('permissionsRequired', 'error');
         return;
       }
-      const warningBanner = document.getElementById('permissionsWarning');
       if (warningBanner) warningBanner.classList.remove('visible');
       saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser);
     });
   } else {
-    const warningBanner = document.getElementById('permissionsWarning');
     if (warningBanner) warningBanner.classList.remove('visible');
     saveToSyncStorage(cupsServers, ippPrinters, syncInterval, defaultRequestingUser);
   }
@@ -195,6 +194,7 @@ async function saveToSyncStorage(cupsServers, ippPrinters, syncInterval, default
 }
 
 async function restoreOptions() {
+  const warningBanner = document.getElementById('permissionsWarning');
   // Query sync user configuration and local sync logs
   let syncItems = {};
   let localItems = {};
@@ -279,13 +279,11 @@ async function restoreOptions() {
         console.error('Permission check error:', chrome.runtime.lastError);
         return;
       }
-      const warningBanner = document.getElementById('permissionsWarning');
       if (warningBanner) {
         warningBanner.classList.toggle('visible', !hasPermissions);
       }
     });
   } else {
-    const warningBanner = document.getElementById('permissionsWarning');
     if (warningBanner) warningBanner.classList.remove('visible');
   }
 }

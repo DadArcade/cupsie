@@ -2,19 +2,19 @@
 
 ## Install
 
-Open [Cupsie Extension](https://chromewebstore.google.com/detail/dekecaodhfljnecmmkenlmjfcbmdokno/) on Chrome Web Store and click **Add to Chrome** button.
+Open the [Cupsie Extension](https://chromewebstore.google.com/detail/dekecaodhfljnecmmkenlmjfcbmdokno/) on the Chrome Web Store and click the **Add to Chrome** button.
 
 Cupsie makes printing from your Chrome browser simple. You just add a CUPS server, and Cupsie automatically pulls all the shared printers from it so you can print right away. 
 
-You do not need to install any system printer drivers, and it works perfectly in Chrome browser on ChromeOS, Linux, macOS, and Windows.
+You do not need to install any system printer drivers, and it works perfectly in the Chrome browser on ChromeOS, Linux, macOS, and Windows.
 
 ## How it works
 
-Cupsie syncs all the shared printers from CUPS server(s) to make them available in your Chrome Print dialog. Your imported printers appear directly in your regular Chrome print list. Advanced printer settings like finishing, stapling, and input/output tray selection are exposed under Advanced Settings in the Chrome Print dialog. 
+Cupsie syncs all the shared printers from your CUPS server(s) to make them available in your Chrome Print dialog. Your imported printers appear directly in your regular Chrome print list. Advanced printer settings like finishing, stapling, and input/output tray selection are exposed under Advanced Settings in the Chrome Print dialog. 
 
 If you need to, you can also connect directly to individual network printers without using a central CUPS server, as long as they are IPP-capable.
 
-The extension syncs periodically in the background to ensure your available printer list always stays up to date. For more details, see [Architecture](https://github.com/DadArcade/cupsie/wiki/Architecture)
+The extension syncs periodically in the background to ensure your available printer list always stays up to date. For more details, see [Architecture](https://github.com/DadArcade/cupsie/wiki/Architecture).
 
 ## Privacy
 
@@ -33,7 +33,7 @@ Open the extension **Options** page (right-click the extension icon and select *
 - *Example*: `http://192.168.1.10:631` or `https://cups-server.example.com`
 - The extension automatically connects to each server and fetches all available printer queues.
 > [!NOTE]
-> If you use https, Cupsie will only connect to servers with trusted certificates.
+> If you use HTTPS, Cupsie will only connect to servers with trusted certificates.
 
 ### 2. Adding Standalone IPP Printers
 - Under **Standalone IPP Printers**, enter the IPP URL of your printer and an optional friendly display name.
@@ -42,7 +42,7 @@ Open the extension **Options** page (right-click the extension icon and select *
   - **Name**: `HP Laserjet`
 - Click **+ Add Another Printer** to add more printers if needed.
 
-For more use cases, see the detailed [User Guide](https://github.com/DadArcade/cupsie/wiki/User-Guide)
+For more use cases, see the detailed [User Guide](https://github.com/DadArcade/cupsie/wiki/User-Guide).
 
 ## Privacy
 

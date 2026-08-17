@@ -6,7 +6,7 @@ Just three steps:
 
 1. **Install extension**: Add the [Cupsie Extension](https://chromewebstore.google.com/detail/dekecaodhfljnecmmkenlmjfcbmdokno/) from the Chrome Web Store.
 2. **Add CUPS server**: Right-click the installed extension icon, select **Options**, and enter your CUPS server address.
-3. **Press Save**: Click save to automatically sync your printers and start printing right away.
+3. **Press Save**: Click save to automatically sync your printers, give Cupsie permission to access the CUPS server, and start printing right away.
 
 ## How it works
 

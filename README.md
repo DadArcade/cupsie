@@ -12,6 +12,8 @@ Just three steps:
 
 Cupsie syncs all the shared printers from your CUPS server(s) to make them available in your Chrome Print dialog. Your imported printers appear directly in your regular Chrome print list. Advanced printer settings like finishing, stapling, and input/output tray selection are exposed under Advanced Settings in the Chrome Print dialog. 
 
+<img width="60%" alt="cupsie-printer-list" src="https://github.com/user-attachments/assets/9540a858-e68e-492b-8c09-2f68d2c5a24f" />
+
 If you need to, you can also connect directly to individual network printers without using a central CUPS server, as long as they are IPP-capable.
 
 The extension syncs periodically in the background to ensure your available printer list always stays up to date. For more details, see [Architecture](https://github.com/DadArcade/cupsie/wiki/Architecture).

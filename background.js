@@ -130,6 +130,8 @@ chrome.runtime.onConnect.addListener((port) => {
 
 const BACKGROUND_SYNC_ALARM = 'SYNC_PRINTERS_ALARM';
 const DEFAULT_SYNC_INTERVAL_MINUTES = 1440;
+const MIN_SYNC_INTERVAL_MINUTES = 1;
+const MAX_SYNC_INTERVAL_MINUTES = 7200;
 const PRINT_JOB_TIMEOUT_MS = 600000;
 
 /**
@@ -387,10 +389,25 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
 async function updateAlarm() {
   let period = DEFAULT_SYNC_INTERVAL_MINUTES;
   try {
-    const syncItems = await chrome.storage.sync.get(['syncInterval']);
-    period = syncItems.syncInterval || DEFAULT_SYNC_INTERVAL_MINUTES;
+    const managedItems = await chrome.storage.managed.get(['syncInterval']);
+    if (managedItems && managedItems.syncInterval !== undefined) {
+      if (managedItems.syncInterval >= MIN_SYNC_INTERVAL_MINUTES && managedItems.syncInterval <= MAX_SYNC_INTERVAL_MINUTES) {
+        period = managedItems.syncInterval;
+      } else {
+        console.error(`Managed syncInterval out of range. Must be between ${MIN_SYNC_INTERVAL_MINUTES}-${MAX_SYNC_INTERVAL_MINUTES}. Falling back to default.`);
+      }
+    } else {
+      const syncItems = await chrome.storage.sync.get(['syncInterval']);
+      if (syncItems && syncItems.syncInterval !== undefined) {
+        if (syncItems.syncInterval >= MIN_SYNC_INTERVAL_MINUTES && syncItems.syncInterval <= MAX_SYNC_INTERVAL_MINUTES) {
+          period = syncItems.syncInterval;
+        } else {
+          console.error(`User syncInterval out of range. Must be between ${MIN_SYNC_INTERVAL_MINUTES}-${MAX_SYNC_INTERVAL_MINUTES}. Falling back to default.`);
+        }
+      }
+    }
   } catch (e) {
-    console.warn('Failed to retrieve syncInterval from storage.sync, falling back to default:', e);
+    console.warn('Failed to retrieve syncInterval from storage, falling back to default:', e);
     period = DEFAULT_SYNC_INTERVAL_MINUTES;
   }
 

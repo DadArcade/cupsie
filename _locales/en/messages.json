@@ -67,7 +67,7 @@
     "description": "Placeholder for default requesting username input."
   },
   "syncIntervalInvalid": {
-    "message": "Background sync interval must be between 1 and 1440 minutes.",
+    "message": "Background sync interval must be between 1 and 7200 minutes.",
     "description": "Error message shown when the sync interval is out of bounds."
   },
   "lastSyncLabel": {

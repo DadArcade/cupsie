@@ -1,0 +1,715 @@
+{
+  "extName": {
+    "message": "Cupsie",
+    "description": "The name of the extension."
+  },
+  "extDesc": {
+    "message": "Ajoute des imprimantes basées sur CUPS et des imprimantes IPP à la boîte de dialogue d'impression native de Chrome.",
+    "description": "Description of the extension."
+  },
+  "optionsPageTitle": {
+    "message": "Options de Cupsie",
+    "description": "Title of the options page in the browser tab."
+  },
+  "optionsPageHeader": {
+    "message": "Configuration de Cupsie",
+    "description": "Main header on the options page."
+  },
+
+  "userCupsLabel": {
+    "message": "Serveurs CUPS",
+    "description": "Label for user custom CUPS servers."
+  },
+  "userCupsNote": {
+    "message": "Saisissez une adresse IP ou une URL par ligne (ex. http://192.168.1.10:631). L'extension récupérera automatiquement toutes les files d'attente de ces serveurs.",
+    "description": "Instructions for custom CUPS servers."
+  },
+
+  "userIppLabel": {
+    "message": "Imprimantes IPP autonomes",
+    "description": "Label for user custom IPP printers."
+  },
+  "userIppNote": {
+    "message": "Saisissez des URL de points d'accès direct HTTP/HTTPS ou IPP/IPPS ainsi que des noms d'affichage facultatifs pour vos imprimantes autonomes (ex. ipp://192.168.1.50:631/ipp/print ou http://192.168.1.50:631/ipp/print).",
+    "description": "Instructions for custom IPP printers."
+  },
+  "addIppPrinterButton": {
+    "message": "Ajouter une autre imprimante",
+    "description": "Button to add a new user-defined IPP printer row."
+  },
+  "printerNamePlaceholder": {
+    "message": "Nom (facultatif)",
+    "description": "Placeholder for the optional display name input when adding an IPP printer."
+  },
+  "removePrinterTitle": {
+    "message": "Supprimer l'imprimante",
+    "description": "Tooltip for the remove button on an IPP printer row."
+  },
+  "syncIntervalLabel": {
+    "message": "Intervalle de synchronisation en arrière-plan (minutes)",
+    "description": "Label for sync interval selection."
+  },
+
+  "syncIntervalNote": {
+    "message": "Fréquence à laquelle l'extension vérifie le réseau pour trouver de nouvelles imprimantes. Minimum 1 minute.",
+    "description": "Instruction note for background sync interval."
+  },
+  "defaultRequestingUserLabel": {
+    "message": "Nom d'utilisateur demandeur par défaut",
+    "description": "Label for default requesting username input."
+  },
+  "defaultRequestingUserNote": {
+    "message": "Le nom d'utilisateur transmis aux imprimantes ne nécessitant pas d'authentification. Si laissé vide, 'Chrome User' sera utilisé par défaut.",
+    "description": "Explanatory note for default requesting username input."
+  },
+  "defaultRequestingUserPlaceholder": {
+    "message": "ex. jean.dupont",
+    "description": "Placeholder for default requesting username input."
+  },
+  "syncIntervalInvalid": {
+    "message": "L'intervalle de synchronisation en arrière-plan doit être compris entre 1 et 7200 minutes.",
+    "description": "Error message shown when the sync interval is out of bounds."
+  },
+  "lastSyncLabel": {
+    "message": "Dernière synchronisation :",
+    "description": "Label showing the timestamp of the last printer sync."
+  },
+  "never": {
+    "message": "Jamais",
+    "description": "Default status when last sync time is missing."
+  },
+  "viewLogsLink": {
+    "message": "Voir les journaux de dépannage →",
+    "description": "Link to the troubleshooting logs page."
+  },
+  "syncResultsHeader": {
+    "message": "Résultats de synchronisation",
+    "description": "Section header for server and printer connection status."
+  },
+  "saveSettingsButton": {
+    "message": "Enregistrer les paramètres",
+    "description": "Submit button text."
+  },
+  "savingSettings": {
+    "message": "Enregistrement des paramètres et synchronisation des imprimantes...",
+    "description": "Status text while saving."
+  },
+  "syncProgress": {
+    "message": "Enregistrement des paramètres et synchronisation des imprimantes ($1/$2)...",
+    "description": "Progress text while saving and syncing.",
+    "placeholders": {
+      "COMPLETED": {
+        "content": "$1",
+        "example": "1"
+      },
+      "TOTAL": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "syncSuccess": {
+    "message": "Paramètres enregistrés et imprimantes synchronisées !",
+    "description": "Status text on successful save & sync."
+  },
+  "syncFailed": {
+    "message": "Paramètres enregistrés, mais la synchronisation des imprimantes a échoué : $ERROR$",
+    "description": "Status text when sync fails.",
+    "placeholders": {
+      "ERROR": {
+        "content": "$1",
+        "example": "Network error"
+      }
+    }
+  },
+  "noPrintersConfigured": {
+    "message": "Aucune imprimante ni aucun serveur configuré.",
+    "description": "Shown in the sync status list when configuration is empty."
+  },
+  "sync_error_non_ipp": {
+    "message": "Réponse non-IPP (blocage par proxy ou pare-feu ?)",
+    "description": "Error reason when server returns wrong Content-Type."
+  },
+  "sync_success_queues": {
+    "message": "$COUNT$ file(s) d'attente trouvée(s).",
+    "description": "Success message for CUPS server sync.",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "sync_error_http": {
+    "message": "Erreur HTTP : $STATUS$",
+    "description": "Error reason with status code.",
+    "placeholders": {
+      "STATUS": {
+        "content": "$1",
+        "example": "500"
+      }
+    }
+  },
+  "sync_error_network": {
+    "message": "Erreur réseau : $MESSAGE$",
+    "description": "Network exception message.",
+    "placeholders": {
+      "MESSAGE": {
+        "content": "$1",
+        "example": "Failed to fetch"
+      }
+    }
+  },
+  "sync_skipped_unauthorized": {
+    "message": "Ignoré (non autorisé)",
+    "description": "Status when the current user is not in the allowed user list."
+  },
+  "sync_skipped_ignored": {
+    "message": "Ignoré (Authentification ignorée par l'utilisateur)",
+    "description": "Status message shown when a printer is skipped because user selected Don't Ask Again."
+  },
+  "sync_success_discovered": {
+    "message": "Découvert : « $NAME$ »",
+    "description": "Success message for standalone printer sync.",
+    "placeholders": {
+      "NAME": {
+        "content": "$1",
+        "example": "Office Printer"
+      }
+    }
+  },
+  "logsPageTitle": {
+    "message": "Journaux de dépannage - Fournisseur d'impression",
+    "description": "Logs page tab title."
+  },
+  "logsPageHeader": {
+    "message": "Journaux de dépannage",
+    "description": "Main header on the logs page."
+  },
+  "logsSubtitle": {
+    "message": "2048 dernières entrées de journal capturées lors des opérations en arrière-plan",
+    "description": "Subtitle explaining logs duration."
+  },
+  "refreshButton": {
+    "message": "Actualiser",
+    "description": "Label for refresh logs button."
+  },
+  "downloadLogsButton": {
+    "message": "Télécharger le journal",
+    "description": "Label for download logs button."
+  },
+  "clearLogsButton": {
+    "message": "Effacer les journaux",
+    "description": "Label for clear logs button."
+  },
+  "timestampHeader": {
+    "message": "HORODATAGE",
+    "description": "Logs table column header."
+  },
+  "levelHeader": {
+    "message": "NIVEAU",
+    "description": "Logs table column header."
+  },
+  "messageHeader": {
+    "message": "MESSAGE",
+    "description": "Logs table column header."
+  },
+  "backToSettingsLink": {
+    "message": "← Retour aux paramètres",
+    "description": "Button-link leading back to options.html."
+  },
+  "noLogsFound": {
+    "message": "Aucun journal de dépannage trouvé. Les journaux se rempliront lors des actions en arrière-plan.",
+    "description": "Placeholder text when there are no logs to display."
+  },
+  "confirmClearLogs": {
+    "message": "Voulez-vous vraiment effacer tous les journaux de dépannage ?",
+    "description": "Confirm dialog message before wiping logs."
+  },
+  "downloadHeaderTitle": {
+    "message": "JOURNAL DE DÉPANNAGE DE L'EXTENSION CUPSIE",
+    "description": "Header title inside the downloaded text log."
+  },
+  "printErrorPageTitle": {
+    "message": "Erreur d'impression",
+    "description": "Tab title for error.html."
+  },
+  "printErrorHeader": {
+    "message": "Erreur d'impression",
+    "description": "Header inside the error popup."
+  },
+  "dismiss": {
+    "message": "Fermer",
+    "description": "Close button text in the error card."
+  },
+  "unknownErrorOccurred": {
+    "message": "Une erreur inconnue s'est produite.",
+    "description": "Fallback error message."
+  },
+  "accessDenied": {
+    "message": "Accès refusé",
+    "description": "Title of authorization block warning."
+  },
+  "accessDeniedMessage": {
+    "message": "Vous n'avez pas l'autorisation d'imprimer ou d'accéder à « $TARGET$ ».",
+    "description": "Details for access denial.",
+    "placeholders": {
+      "TARGET": {
+        "content": "$1",
+        "example": "Marketing-Printer"
+      }
+    }
+  },
+  "printJobFailed": {
+    "message": "Échec de la tâche d'impression",
+    "description": "Notification title when print dispatch fails."
+  },
+  "printJobFailedMessage": {
+    "message": "La tâche « $TITLE$ » a échoué : $REASON$",
+    "description": "Details for print job failure.",
+    "placeholders": {
+      "TITLE": {
+        "content": "$1",
+        "example": "Tax_Report.pdf"
+      },
+      "REASON": {
+        "content": "$2",
+        "example": "Access Denied"
+      }
+    }
+  },
+  "ipp_error_0401": {
+    "message": "Non autorisé (Authentification requise).",
+    "description": "IPP status code 0x0401 translation."
+  },
+  "ipp_error_0403": {
+    "message": "Accès refusé : vous n'avez pas l'autorisation d'imprimer sur cette imprimante.",
+    "description": "IPP status code 0x0403 translation."
+  },
+  "ipp_error_0407": {
+    "message": "File d'attente d'impression introuvable sur le serveur d'impression.",
+    "description": "IPP status code 0x0407 translation."
+  },
+  "ipp_error_0408": {
+    "message": "La file d'attente d'impression a disparu ou a été supprimée.",
+    "description": "IPP status code 0x0408 translation."
+  },
+  "ipp_error_040b": {
+    "message": "Attributs contradictoires spécifiés dans le ticket d'impression.",
+    "description": "IPP status code 0x040b translation."
+  },
+  "ipp_error_0506": {
+    "message": "L'imprimante n'accepte pas les tâches d'impression actuellement.",
+    "description": "IPP status code 0x0506 translation."
+  },
+  "ipp_error_0507": {
+    "message": "0x507 - L'imprimante est occupée",
+    "description": "IPP status code 0x0507 translation."
+  },
+  "ipp_error_unknown": {
+    "message": "L'imprimante a retourné le code de statut $CODE$.",
+    "description": "Generic IPP status code translation.",
+    "placeholders": {
+      "CODE": {
+        "content": "$1",
+        "example": "0x0400"
+      }
+    }
+  },
+  "errProxyFirewall": {
+    "message": "Connexion bloquée par un proxy ou un pare-feu.",
+    "description": "HTTP post failure detail."
+  },
+  "errProxyGateway": {
+    "message": "Connexion rejetée par le proxy/passerelle réseau.",
+    "description": "HTTP post failure detail."
+  },
+  "errHttpUnauthorized": {
+    "message": "Accès refusé / Non autorisé (HTTP 401/403).",
+    "description": "HTTP post failure detail."
+  },
+  "errHttpProxyAuth": {
+    "message": "Authentification proxy requise (HTTP 407).",
+    "description": "HTTP post failure detail."
+  },
+  "errHttpBadGateway": {
+    "message": "Erreur de proxy ou mauvaise passerelle (HTTP 502/504).",
+    "description": "HTTP post failure detail."
+  },
+  "errConnectionFailed": {
+    "message": "Échec de la connexion.",
+    "description": "Fallback print exception message."
+  },
+  "use_printer_default": {
+    "message": "Utiliser la valeur par défaut de l'imprimante",
+    "description": "Option value prepended to Advanced Settings Select elements."
+  },
+  "input_tray": {
+    "message": "Bac d'alimentation",
+    "description": "Advanced print capability label."
+  },
+  "output_tray": {
+    "message": "Bac de sortie",
+    "description": "Advanced print capability label."
+  },
+  "paper_type": {
+    "message": "Type de papier",
+    "description": "Advanced print capability label."
+  },
+  "print_scaling": {
+    "message": "Mise à l'échelle d'impression",
+    "description": "Advanced print capability label."
+  },
+  "banner_page": {
+    "message": "Page de garde",
+    "description": "Advanced print capability label."
+  },
+  "page_delivery": {
+    "message": "Ordre des pages",
+    "description": "Advanced print capability label."
+  },
+  "orientation": {
+    "message": "Orientation",
+    "description": "Advanced print capability label."
+  },
+  "collation": {
+    "message": "Assemblage",
+    "description": "Advanced print capability label."
+  },
+  "hold_until": {
+    "message": "Mettre en attente jusqu'à",
+    "description": "Advanced print capability label."
+  },
+  "finishing_options": {
+    "message": "Options de finition",
+    "description": "Advanced print capability label."
+  },
+  "orient_portrait": {
+    "message": "Portrait",
+    "description": "Orientation option value."
+  },
+  "orient_landscape": {
+    "message": "Paysage",
+    "description": "Orientation option value."
+  },
+  "orient_rev_landscape": {
+    "message": "Paysage inversé",
+    "description": "Orientation option value."
+  },
+  "orient_rev_portrait": {
+    "message": "Portrait inversé",
+    "description": "Orientation option value."
+  },
+  "orient_none": {
+    "message": "Aucun",
+    "description": "Orientation option value for none."
+  },
+  "orient_unknown": {
+    "message": "Orientation n°$VAL$",
+    "description": "Fallback orientation option.",
+    "placeholders": {
+      "VAL": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "col_uncollated": {
+    "message": "Non assemblé",
+    "description": "Collation option value."
+  },
+  "col_collated": {
+    "message": "Assemblé",
+    "description": "Collation option value."
+  },
+  "finish_none": {
+    "message": "Aucun",
+    "description": "Finishing option value."
+  },
+  "finish_staple": {
+    "message": "Agrafage",
+    "description": "Finishing option value."
+  },
+  "finish_punch": {
+    "message": "Perforation",
+    "description": "Finishing option value."
+  },
+  "finish_cover": {
+    "message": "Couverture",
+    "description": "Finishing option value."
+  },
+  "finish_bind": {
+    "message": "Reliure",
+    "description": "Finishing option value."
+  },
+  "finish_saddle_stitch": {
+    "message": "Piqûre à cheval",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch": {
+    "message": "Piquage latéral",
+    "description": "Finishing option value."
+  },
+  "finish_staple_top_left": {
+    "message": "Agrafe en haut à gauche",
+    "description": "Finishing option value."
+  },
+  "finish_staple_bottom_left": {
+    "message": "Agrafe en bas à gauche",
+    "description": "Finishing option value."
+  },
+  "finish_staple_top_right": {
+    "message": "Agrafe en haut à droite",
+    "description": "Finishing option value."
+  },
+  "finish_staple_bottom_right": {
+    "message": "Agrafe en bas à droite",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_left": {
+    "message": "Piquage latéral gauche",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_top": {
+    "message": "Piquage latéral haut",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_right": {
+    "message": "Piquage latéral droit",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_bottom": {
+    "message": "Piquage latéral bas",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_left": {
+    "message": "Double agrafe à gauche",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_top": {
+    "message": "Double agrafe en haut",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_right": {
+    "message": "Double agrafe à droite",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_bottom": {
+    "message": "Double agrafe en bas",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_left": {
+    "message": "Triple agrafe à gauche",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_top": {
+    "message": "Triple agrafe en haut",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_right": {
+    "message": "Triple agrafe à droite",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_bottom": {
+    "message": "Triple agrafe en bas",
+    "description": "Finishing option value."
+  },
+  "finish_bind_left": {
+    "message": "Reliure à gauche",
+    "description": "Finishing option value."
+  },
+  "finish_bind_top": {
+    "message": "Reliure en haut",
+    "description": "Finishing option value."
+  },
+  "finish_bind_right": {
+    "message": "Reliure à droite",
+    "description": "Finishing option value."
+  },
+  "finish_bind_bottom": {
+    "message": "Reliure en bas",
+    "description": "Finishing option value."
+  },
+  "finish_trim": {
+    "message": "Rognage",
+    "description": "Finishing option value."
+  },
+  "finish_punch_dual_left": {
+    "message": "Double perforation à gauche",
+    "description": "Finishing option value."
+  },
+  "finish_punch_dual_top": {
+    "message": "Double perforation en haut",
+    "description": "Finishing option value."
+  },
+  "finish_punch_dual_right": {
+    "message": "Double perforation à droite",
+    "description": "Finishing option value."
+  },
+  "finish_punch_triple_left": {
+    "message": "Triple perforation à gauche",
+    "description": "Finishing option value."
+  },
+  "finish_punch_triple_top": {
+    "message": "Triple perforation en haut",
+    "description": "Finishing option value."
+  },
+  "finish_punch_triple_right": {
+    "message": "Triple perforation à droite",
+    "description": "Finishing option value."
+  },
+  "finish_punch_quad_left": {
+    "message": "Quadruple perforation à gauche",
+    "description": "Finishing option value."
+  },
+  "finish_punch_quad_top": {
+    "message": "Quadruple perforation en haut",
+    "description": "Finishing option value."
+  },
+  "finish_punch_quad_right": {
+    "message": "Quadruple perforation à droite",
+    "description": "Finishing option value."
+  },
+  "finish_fold_accordion": {
+    "message": "Pliage accordéon",
+    "description": "Finishing option value."
+  },
+  "finish_fold_double_gate": {
+    "message": "Pliage double fenêtre",
+    "description": "Finishing option value."
+  },
+  "finish_fold_gate": {
+    "message": "Pliage fenêtre",
+    "description": "Finishing option value."
+  },
+  "finish_fold_half": {
+    "message": "Pliage en deux",
+    "description": "Finishing option value."
+  },
+  "finish_fold_half_z": {
+    "message": "Pliage demi Z",
+    "description": "Finishing option value."
+  },
+  "finish_fold_left_gate": {
+    "message": "Pliage fenêtre gauche",
+    "description": "Finishing option value."
+  },
+  "finish_fold_letter": {
+    "message": "Pliage lettre",
+    "description": "Finishing option value."
+  },
+  "finish_fold_poster": {
+    "message": "Pliage poster",
+    "description": "Finishing option value."
+  },
+  "finish_fold_right_gate": {
+    "message": "Pliage fenêtre droit",
+    "description": "Finishing option value."
+  },
+  "finish_fold_z": {
+    "message": "Pliage en Z",
+    "description": "Finishing option value."
+  },
+  "finish_unknown": {
+    "message": "Finition n°$VAL$",
+    "description": "Fallback finishing option.",
+    "placeholders": {
+      "VAL": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "permissionsRequired": {
+    "message": "Des autorisations de connexion sont requises pour synchroniser ces imprimantes.",
+    "description": "Error displayed when user denies permission to query the printer host."
+  },
+  "syncedPermissionsMissing": {
+    "message": "Les autorisations de connexion pour certaines imprimantes synchronisées sont manquantes sur cet appareil. Veuillez cliquer sur « Enregistrer les paramètres » pour accorder l'accès.",
+    "description": "Warning message shown when restored sync settings require permissions that haven't been granted on this device."
+  },
+  "loginPageTitle": {
+    "message": "Authentification de l'imprimante",
+    "description": "Title of the login dialog window."
+  },
+  "loginPageHeader": {
+    "message": "Connexion à l'imprimante requise",
+    "description": "Header in the login dialog."
+  },
+  "loginPageSubheader": {
+    "message": "L'imprimante ou le serveur CUPS suivant nécessite des identifiants pour se connecter :",
+    "description": "Description text in the login dialog."
+  },
+  "loginUsernamePlaceholder": {
+    "message": "Nom d'utilisateur",
+    "description": "Placeholder for the username input field."
+  },
+  "loginPasswordPlaceholder": {
+    "message": "Mot de passe",
+    "description": "Placeholder for the password input field."
+  },
+  "loginSaveButton": {
+    "message": "Enregistrer les identifiants",
+    "description": "Button to save credentials and try sync."
+  },
+  "loginCancelButton": {
+    "message": "Annuler",
+    "description": "Button to close the login dialog."
+  },
+  "loginErrorAuthFailed": {
+    "message": "Échec de l'authentification. Veuillez vérifier vos identifiants.",
+    "description": "Error message when verification fails."
+  },
+  "loginSuccessMsg": {
+    "message": "Connexion en cours...",
+    "description": "Status message when credentials verified."
+  },
+  "loginIgnoreCheckbox": {
+    "message": "Ne plus demander (ignorer cette imprimante/ce serveur)",
+    "description": "Label for the ignore/skip checkbox on the login dialog."
+  },
+  "loginNoAuthRequired": {
+    "message": "Aucune authentification requise pour le moment.",
+    "description": "Status message shown if no authentication is required."
+  },
+  "loginErrorSaveFailed": {
+    "message": "Échec de l'enregistrement des paramètres.",
+    "description": "Error message when saving credentials fails."
+  },
+  "loginErrorCommError": {
+    "message": "Erreur de communication avec la page d'arrière-plan.",
+    "description": "Error message when communication with the background script fails."
+  },
+  "loginSuccessVerified": {
+    "message": "Toutes les connexions ont été vérifiées avec succès !",
+    "description": "Status message shown when all connection credentials have been verified."
+  },
+  "loginErrorVerificationFailed": {
+    "message": "Échec de la vérification.",
+    "description": "Error message when verification fails due to internal errors."
+  },
+  "storedCredentialsLabel": {
+    "message": "Identifiants enregistrés",
+    "description": "Label for the stored credentials section."
+  },
+  "storedCredentialsNote": {
+    "message": "Identifiants enregistrés pour les imprimantes et serveurs CUPS nécessitant une authentification.",
+    "description": "Explanatory note for the stored credentials section."
+  },
+  "noStoredCredentials": {
+    "message": "Aucun identifiant enregistré trouvé.",
+    "description": "Message shown when there are no stored credentials."
+  },
+  "removeCredentialTitle": {
+    "message": "Supprimer l'identifiant",
+    "description": "Tooltip for the remove button of a stored credential."
+  },
+  "loginErrorLoadFailed": {
+    "message": "Échec du chargement des exigences d'authentification.",
+    "description": "Error message when loading authentication required devices from local storage fails."
+  },
+  "loginDisclaimer": {
+    "message": "Votre mot de passe sera stocké en texte clair sur le disque.",
+    "description": "Warning message shown when user is about to save credentials."
+  }
+}

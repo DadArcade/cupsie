@@ -1,0 +1,715 @@
+{
+  "extName": {
+    "message": "Cupsie",
+    "description": "The name of the extension."
+  },
+  "extDesc": {
+    "message": "Lägger till CUPS-baserade skrivare och IPP-skrivare i den inbyggda utskriftsdialogen i Chrome.",
+    "description": "Description of the extension."
+  },
+  "optionsPageTitle": {
+    "message": "Cupsie-alternativ",
+    "description": "Title of the options page in the browser tab."
+  },
+  "optionsPageHeader": {
+    "message": "Cupsie-konfiguration",
+    "description": "Main header on the options page."
+  },
+
+  "userCupsLabel": {
+    "message": "CUPS-servrar",
+    "description": "Label for user custom CUPS servers."
+  },
+  "userCupsNote": {
+    "message": "Ange en IP-adress eller URL per rad (t.ex. http://192.168.1.10:631). Tillägget hämtar automatiskt alla köer från dessa servrar.",
+    "description": "Instructions for custom CUPS servers."
+  },
+
+  "userIppLabel": {
+    "message": "Fristående IPP-skrivare",
+    "description": "Label for user custom IPP printers."
+  },
+  "userIppNote": {
+    "message": "Ange direkta HTTP/HTTPS- eller IPP/IPPS-slutpunkts-URL:er och valfria visningsnamn för dina fristående skrivare (t.ex. ipp://192.168.1.50:631/ipp/print eller http://192.168.1.50:631/ipp/print).",
+    "description": "Instructions for custom IPP printers."
+  },
+  "addIppPrinterButton": {
+    "message": "Lägg till en till skrivare",
+    "description": "Button to add a new user-defined IPP printer row."
+  },
+  "printerNamePlaceholder": {
+    "message": "Namn (valfritt)",
+    "description": "Placeholder for the optional display name input when adding an IPP printer."
+  },
+  "removePrinterTitle": {
+    "message": "Ta bort skrivare",
+    "description": "Tooltip for the remove button on an IPP printer row."
+  },
+  "syncIntervalLabel": {
+    "message": "Intervall för bakgrundssynkronisering (minuter)",
+    "description": "Label for sync interval selection."
+  },
+
+  "syncIntervalNote": {
+    "message": "Hur ofta tillägget kontrollerar nätverket efter nya skrivare. Minst 1 minut.",
+    "description": "Instruction note for background sync interval."
+  },
+  "defaultRequestingUserLabel": {
+    "message": "Standardanvändarnamn för begäran",
+    "description": "Label for default requesting username input."
+  },
+  "defaultRequestingUserNote": {
+    "message": "Användarnamnet som skickas till skrivare som inte kräver autentisering. Om det lämnas tomt används standardvärdet 'Chrome User'.",
+    "description": "Explanatory note for default requesting username input."
+  },
+  "defaultRequestingUserPlaceholder": {
+    "message": "t.ex. sven.svensson",
+    "description": "Placeholder for default requesting username input."
+  },
+  "syncIntervalInvalid": {
+    "message": "Intervallet för bakgrundssynkronisering måste vara mellan 1 och 7200 minuter.",
+    "description": "Error message shown when the sync interval is out of bounds."
+  },
+  "lastSyncLabel": {
+    "message": "Senaste synkronisering:",
+    "description": "Label showing the timestamp of the last printer sync."
+  },
+  "never": {
+    "message": "Aldrig",
+    "description": "Default status when last sync time is missing."
+  },
+  "viewLogsLink": {
+    "message": "Visa felsökningsloggar →",
+    "description": "Link to the troubleshooting logs page."
+  },
+  "syncResultsHeader": {
+    "message": "Synkroniseringsresultat",
+    "description": "Section header for server and printer connection status."
+  },
+  "saveSettingsButton": {
+    "message": "Spara inställningar",
+    "description": "Submit button text."
+  },
+  "savingSettings": {
+    "message": "Sparar inställningar och synkroniserar skrivare...",
+    "description": "Status text while saving."
+  },
+  "syncProgress": {
+    "message": "Sparar inställningar och synkroniserar skrivare ($1/$2)...",
+    "description": "Progress text while saving and syncing.",
+    "placeholders": {
+      "COMPLETED": {
+        "content": "$1",
+        "example": "1"
+      },
+      "TOTAL": {
+        "content": "$2",
+        "example": "5"
+      }
+    }
+  },
+  "syncSuccess": {
+    "message": "Inställningarna har sparats och skrivarna har synkroniserats!",
+    "description": "Status text on successful save & sync."
+  },
+  "syncFailed": {
+    "message": "Inställningarna sparades, men skrivarsynkroniseringen misslyckades: $ERROR$",
+    "description": "Status text when sync fails.",
+    "placeholders": {
+      "ERROR": {
+        "content": "$1",
+        "example": "Network error"
+      }
+    }
+  },
+  "noPrintersConfigured": {
+    "message": "Inga skrivare eller servrar har konfigurerats.",
+    "description": "Shown in the sync status list when configuration is empty."
+  },
+  "sync_error_non_ipp": {
+    "message": "Icke-IPP-svar (proxy-/brandväggsblockering?)",
+    "description": "Error reason when server returns wrong Content-Type."
+  },
+  "sync_success_queues": {
+    "message": "Hittade $COUNT$ kö(er).",
+    "description": "Success message for CUPS server sync.",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "sync_error_http": {
+    "message": "HTTP-fel: $STATUS$",
+    "description": "Error reason with status code.",
+    "placeholders": {
+      "STATUS": {
+        "content": "$1",
+        "example": "500"
+      }
+    }
+  },
+  "sync_error_network": {
+    "message": "Nätverksfel: $MESSAGE$",
+    "description": "Network exception message.",
+    "placeholders": {
+      "MESSAGE": {
+        "content": "$1",
+        "example": "Failed to fetch"
+      }
+    }
+  },
+  "sync_skipped_unauthorized": {
+    "message": "Överhoppad (obehörig)",
+    "description": "Status when the current user is not in the allowed user list."
+  },
+  "sync_skipped_ignored": {
+    "message": "Överhoppad (Autentisering ignorerades av användaren)",
+    "description": "Status message shown when a printer is skipped because user selected Don't Ask Again."
+  },
+  "sync_success_discovered": {
+    "message": "Upptäckt: \"$NAME$\"",
+    "description": "Success message for standalone printer sync.",
+    "placeholders": {
+      "NAME": {
+        "content": "$1",
+        "example": "Office Printer"
+      }
+    }
+  },
+  "logsPageTitle": {
+    "message": "Felsökningsloggar - Skrivarleverantör",
+    "description": "Logs page tab title."
+  },
+  "logsPageHeader": {
+    "message": "Felsökningsloggar",
+    "description": "Main header on the logs page."
+  },
+  "logsSubtitle": {
+    "message": "Senaste 2048 logginläggen från bakgrundsåtgärder",
+    "description": "Subtitle explaining logs duration."
+  },
+  "refreshButton": {
+    "message": "Uppdatera",
+    "description": "Label for refresh logs button."
+  },
+  "downloadLogsButton": {
+    "message": "Ladda ner logg",
+    "description": "Label for download logs button."
+  },
+  "clearLogsButton": {
+    "message": "Rensa loggar",
+    "description": "Label for clear logs button."
+  },
+  "timestampHeader": {
+    "message": "TIDSSTÄMPEL",
+    "description": "Logs table column header."
+  },
+  "levelHeader": {
+    "message": "NIVÅ",
+    "description": "Logs table column header."
+  },
+  "messageHeader": {
+    "message": "MEDDELANDE",
+    "description": "Logs table column header."
+  },
+  "backToSettingsLink": {
+    "message": "← Tillbaka till inställningar",
+    "description": "Button-link leading back to options.html."
+  },
+  "noLogsFound": {
+    "message": "Inga felsökningsloggar hittades. Loggar fylls på när bakgrundsåtgärder utförs.",
+    "description": "Placeholder text when there are no logs to display."
+  },
+  "confirmClearLogs": {
+    "message": "Är du säker på att du vill rensa alla felsökningsloggar?",
+    "description": "Confirm dialog message before wiping logs."
+  },
+  "downloadHeaderTitle": {
+    "message": "FELSÖKNINGSLOGG FÖR CUPSIE-TILLÄGGET",
+    "description": "Header title inside the downloaded text log."
+  },
+  "printErrorPageTitle": {
+    "message": "Utskriftsfel",
+    "description": "Tab title for error.html."
+  },
+  "printErrorHeader": {
+    "message": "Utskriftsfel",
+    "description": "Header inside the error popup."
+  },
+  "dismiss": {
+    "message": "Avfärda",
+    "description": "Close button text in the error card."
+  },
+  "unknownErrorOccurred": {
+    "message": "Ett okänt fel uppstod.",
+    "description": "Fallback error message."
+  },
+  "accessDenied": {
+    "message": "Åtkomst nekad",
+    "description": "Title of authorization block warning."
+  },
+  "accessDeniedMessage": {
+    "message": "Du har inte behörighet att skriva ut på eller få åtkomst till '$TARGET$'.",
+    "description": "Details for access denial.",
+    "placeholders": {
+      "TARGET": {
+        "content": "$1",
+        "example": "Marketing-Printer"
+      }
+    }
+  },
+  "printJobFailed": {
+    "message": "Utskriftsjobbet misslyckades",
+    "description": "Notification title when print dispatch fails."
+  },
+  "printJobFailedMessage": {
+    "message": "Jobbet '$TITLE$' misslyckades: $REASON$",
+    "description": "Details for print job failure.",
+    "placeholders": {
+      "TITLE": {
+        "content": "$1",
+        "example": "Tax_Report.pdf"
+      },
+      "REASON": {
+        "content": "$2",
+        "example": "Access Denied"
+      }
+    }
+  },
+  "ipp_error_0401": {
+    "message": "Inte behörig (Autentisering krävs).",
+    "description": "IPP status code 0x0401 translation."
+  },
+  "ipp_error_0403": {
+    "message": "Åtkomst nekad: Du har inte behörighet att skriva ut på den här skrivaren.",
+    "description": "IPP status code 0x0403 translation."
+  },
+  "ipp_error_0407": {
+    "message": "Skrivarkön hittades inte på utskriftsserven.",
+    "description": "IPP status code 0x0407 translation."
+  },
+  "ipp_error_0408": {
+    "message": "Skrivarkön är borta eller borttagen.",
+    "description": "IPP status code 0x0408 translation."
+  },
+  "ipp_error_040b": {
+    "message": "Motstridiga attribut angavs i utskriftsbiljetten.",
+    "description": "IPP status code 0x040b translation."
+  },
+  "ipp_error_0506": {
+    "message": "Skrivaren tar för närvarande inte emot utskriftsjobb.",
+    "description": "IPP status code 0x0506 translation."
+  },
+  "ipp_error_0507": {
+    "message": "0x507 - Skrivaren är upptagen",
+    "description": "IPP status code 0x0507 translation."
+  },
+  "ipp_error_unknown": {
+    "message": "Skrivaren returnerade statuskod $CODE$.",
+    "description": "Generic IPP status code translation.",
+    "placeholders": {
+      "CODE": {
+        "content": "$1",
+        "example": "0x0400"
+      }
+    }
+  },
+  "errProxyFirewall": {
+    "message": "Anslutningen blockerades av proxy eller brandvägg.",
+    "description": "HTTP post failure detail."
+  },
+  "errProxyGateway": {
+    "message": "Anslutningen avvisades av nätverksproxy/gateway.",
+    "description": "HTTP post failure detail."
+  },
+  "errHttpUnauthorized": {
+    "message": "Åtkomst nekad / Obehörig (HTTP 401/403).",
+    "description": "HTTP post failure detail."
+  },
+  "errHttpProxyAuth": {
+    "message": "Proxy-autentisering krävs (HTTP 407).",
+    "description": "HTTP post failure detail."
+  },
+  "errHttpBadGateway": {
+    "message": "Proxyfel eller felaktig gateway (HTTP 502/504).",
+    "description": "HTTP post failure detail."
+  },
+  "errConnectionFailed": {
+    "message": "Anslutningen misslyckades.",
+    "description": "Fallback print exception message."
+  },
+  "use_printer_default": {
+    "message": "Använd skrivarens standardvärde",
+    "description": "Option value prepended to Advanced Settings Select elements."
+  },
+  "input_tray": {
+    "message": "Pappersfack",
+    "description": "Advanced print capability label."
+  },
+  "output_tray": {
+    "message": "Utmatningsfack",
+    "description": "Advanced print capability label."
+  },
+  "paper_type": {
+    "message": "Papperstyp",
+    "description": "Advanced print capability label."
+  },
+  "print_scaling": {
+    "message": "Utskriftsskalning",
+    "description": "Advanced print capability label."
+  },
+  "banner_page": {
+    "message": "Följesedel",
+    "description": "Advanced print capability label."
+  },
+  "page_delivery": {
+    "message": "Sidleverans",
+    "description": "Advanced print capability label."
+  },
+  "orientation": {
+    "message": "Orientering",
+    "description": "Advanced print capability label."
+  },
+  "collation": {
+    "message": "Sortering",
+    "description": "Advanced print capability label."
+  },
+  "hold_until": {
+    "message": "Håll kvar till",
+    "description": "Advanced print capability label."
+  },
+  "finishing_options": {
+    "message": "Efterbehandlingsalternativ",
+    "description": "Advanced print capability label."
+  },
+  "orient_portrait": {
+    "message": "Stående",
+    "description": "Orientation option value."
+  },
+  "orient_landscape": {
+    "message": "Liggande",
+    "description": "Orientation option value."
+  },
+  "orient_rev_landscape": {
+    "message": "Omvänd liggande",
+    "description": "Orientation option value."
+  },
+  "orient_rev_portrait": {
+    "message": "Omvänd stående",
+    "description": "Orientation option value."
+  },
+  "orient_none": {
+    "message": "Ingen",
+    "description": "Orientation option value for none."
+  },
+  "orient_unknown": {
+    "message": "Orientering #$VAL$",
+    "description": "Fallback orientation option.",
+    "placeholders": {
+      "VAL": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "col_uncollated": {
+    "message": "Osorterad",
+    "description": "Collation option value."
+  },
+  "col_collated": {
+    "message": "Sorterad",
+    "description": "Collation option value."
+  },
+  "finish_none": {
+    "message": "Ingen",
+    "description": "Finishing option value."
+  },
+  "finish_staple": {
+    "message": "Häftning",
+    "description": "Finishing option value."
+  },
+  "finish_punch": {
+    "message": "Hålslagning",
+    "description": "Finishing option value."
+  },
+  "finish_cover": {
+    "message": "Omslag",
+    "description": "Finishing option value."
+  },
+  "finish_bind": {
+    "message": "Inbindning",
+    "description": "Finishing option value."
+  },
+  "finish_saddle_stitch": {
+    "message": "Sadelhäftning",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch": {
+    "message": "Kanthäftning",
+    "description": "Finishing option value."
+  },
+  "finish_staple_top_left": {
+    "message": "Häftning övre vänstra",
+    "description": "Finishing option value."
+  },
+  "finish_staple_bottom_left": {
+    "message": "Häftning nedre vänstra",
+    "description": "Finishing option value."
+  },
+  "finish_staple_top_right": {
+    "message": "Häftning övre högra",
+    "description": "Finishing option value."
+  },
+  "finish_staple_bottom_right": {
+    "message": "Häftning nedre högra",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_left": {
+    "message": "Kanthäftning vänster",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_top": {
+    "message": "Kanthäftning överst",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_right": {
+    "message": "Kanthäftning höger",
+    "description": "Finishing option value."
+  },
+  "finish_edge_stitch_bottom": {
+    "message": "Kanthäftning nederst",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_left": {
+    "message": "Dubbel häftning vänster",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_top": {
+    "message": "Dubbel häftning överst",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_right": {
+    "message": "Dubbel häftning höger",
+    "description": "Finishing option value."
+  },
+  "finish_staple_dual_bottom": {
+    "message": "Dubbel häftning nederst",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_left": {
+    "message": "Trippel häftning vänster",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_top": {
+    "message": "Trippel häftning överst",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_right": {
+    "message": "Trippel häftning höger",
+    "description": "Finishing option value."
+  },
+  "finish_staple_triple_bottom": {
+    "message": "Trippel häftning nederst",
+    "description": "Finishing option value."
+  },
+  "finish_bind_left": {
+    "message": "Inbindning vänster",
+    "description": "Finishing option value."
+  },
+  "finish_bind_top": {
+    "message": "Inbindning överst",
+    "description": "Finishing option value."
+  },
+  "finish_bind_right": {
+    "message": "Inbindning höger",
+    "description": "Finishing option value."
+  },
+  "finish_bind_bottom": {
+    "message": "Inbindning nederst",
+    "description": "Finishing option value."
+  },
+  "finish_trim": {
+    "message": "Renskärning",
+    "description": "Finishing option value."
+  },
+  "finish_punch_dual_left": {
+    "message": "Dubbel hålslagning vänster",
+    "description": "Finishing option value."
+  },
+  "finish_punch_dual_top": {
+    "message": "Dubbel hålslagning överst",
+    "description": "Finishing option value."
+  },
+  "finish_punch_dual_right": {
+    "message": "Dubbel hålslagning höger",
+    "description": "Finishing option value."
+  },
+  "finish_punch_triple_left": {
+    "message": "Trippel hålslagning vänster",
+    "description": "Finishing option value."
+  },
+  "finish_punch_triple_top": {
+    "message": "Trippel hålslagning överst",
+    "description": "Finishing option value."
+  },
+  "finish_punch_triple_right": {
+    "message": "Trippel hålslagning höger",
+    "description": "Finishing option value."
+  },
+  "finish_punch_quad_left": {
+    "message": "Fyrdubbel hålslagning vänster",
+    "description": "Finishing option value."
+  },
+  "finish_punch_quad_top": {
+    "message": "Fyrdubbel hålslagning överst",
+    "description": "Finishing option value."
+  },
+  "finish_punch_quad_right": {
+    "message": "Fyrdubbel hålslagning höger",
+    "description": "Finishing option value."
+  },
+  "finish_fold_accordion": {
+    "message": "Dragspelsfalsning",
+    "description": "Finishing option value."
+  },
+  "finish_fold_double_gate": {
+    "message": "Dubbel altanfalsning",
+    "description": "Finishing option value."
+  },
+  "finish_fold_gate": {
+    "message": "Altanfalsning",
+    "description": "Finishing option value."
+  },
+  "finish_fold_half": {
+    "message": "Enkelfalsning",
+    "description": "Finishing option value."
+  },
+  "finish_fold_half_z": {
+    "message": "Z-falsning halv",
+    "description": "Finishing option value."
+  },
+  "finish_fold_left_gate": {
+    "message": "Vänster altanfalsning",
+    "description": "Finishing option value."
+  },
+  "finish_fold_letter": {
+    "message": "Brevfalsning",
+    "description": "Finishing option value."
+  },
+  "finish_fold_poster": {
+    "message": "Affischfalsning",
+    "description": "Finishing option value."
+  },
+  "finish_fold_right_gate": {
+    "message": "Höger altanfalsning",
+    "description": "Finishing option value."
+  },
+  "finish_fold_z": {
+    "message": "Z-falsning",
+    "description": "Finishing option value."
+  },
+  "finish_unknown": {
+    "message": "Efterbehandling #$VAL$",
+    "description": "Fallback finishing option.",
+    "placeholders": {
+      "VAL": {
+        "content": "$1",
+        "example": "100"
+      }
+    }
+  },
+  "permissionsRequired": {
+    "message": "Anslutningsbehörigheter krävs för att synkronisera dessa skrivare.",
+    "description": "Error displayed when user denies permission to query the printer host."
+  },
+  "syncedPermissionsMissing": {
+    "message": "Anslutningsbehörigheter för vissa synkroniserade skrivare saknas på den här enheten. Klicka på 'Spara inställningar' för att ge åtkomst.",
+    "description": "Warning message shown when restored sync settings require permissions that haven't been granted on this device."
+  },
+  "loginPageTitle": {
+    "message": "Skrivarautentisering",
+    "description": "Title of the login dialog window."
+  },
+  "loginPageHeader": {
+    "message": "Skrivarinloggning krävs",
+    "description": "Header in the login dialog."
+  },
+  "loginPageSubheader": {
+    "message": "Följande skrivare eller CUPS-server/servrar kräver inloggningsuppgifter för att ansluta:",
+    "description": "Description text in the login dialog."
+  },
+  "loginUsernamePlaceholder": {
+    "message": "Användarnamn",
+    "description": "Placeholder for the username input field."
+  },
+  "loginPasswordPlaceholder": {
+    "message": "Lösenord",
+    "description": "Placeholder for the password input field."
+  },
+  "loginSaveButton": {
+    "message": "Spara inloggningsuppgifter",
+    "description": "Button to save credentials and try sync."
+  },
+  "loginCancelButton": {
+    "message": "Avbryt",
+    "description": "Button to close the login dialog."
+  },
+  "loginErrorAuthFailed": {
+    "message": "Autentiseringen misslyckades. Kontrollera inloggningsuppgifterna.",
+    "description": "Error message when verification fails."
+  },
+  "loginSuccessMsg": {
+    "message": "Ansluter...",
+    "description": "Status message when credentials verified."
+  },
+  "loginIgnoreCheckbox": {
+    "message": "Fråga inte igen (hoppa över den här skrivaren/servern)",
+    "description": "Label for the ignore/skip checkbox on the login dialog."
+  },
+  "loginNoAuthRequired": {
+    "message": "Ingen autentisering krävs för närvarande.",
+    "description": "Status message shown if no authentication is required."
+  },
+  "loginErrorSaveFailed": {
+    "message": "Det gick inte att spara inställningarna.",
+    "description": "Error message when saving credentials fails."
+  },
+  "loginErrorCommError": {
+    "message": "Kommunikationsfel med bakgrundssidan.",
+    "description": "Error message when communication with the background script fails."
+  },
+  "loginSuccessVerified": {
+    "message": "Alla anslutningar har verifierats!",
+    "description": "Status message shown when all connection credentials have been verified."
+  },
+  "loginErrorVerificationFailed": {
+    "message": "Verifieringen misslyckades.",
+    "description": "Error message when verification fails due to internal errors."
+  },
+  "storedCredentialsLabel": {
+    "message": "Sparade inloggningsuppgifter",
+    "description": "Label for the stored credentials section."
+  },
+  "storedCredentialsNote": {
+    "message": "Sparade inloggningsuppgifter för skrivare och CUPS-servrar som kräver autentisering.",
+    "description": "Explanatory note for the stored credentials section."
+  },
+  "noStoredCredentials": {
+    "message": "Inga sparade inloggningsuppgifter hittades.",
+    "description": "Message shown when there are no stored credentials."
+  },
+  "removeCredentialTitle": {
+    "message": "Ta bort inloggningsuppgift",
+    "description": "Tooltip for the remove button of a stored credential."
+  },
+  "loginErrorLoadFailed": {
+    "message": "Det gick inte att ladda autentiseringskraven.",
+    "description": "Error message when loading authentication required devices from local storage fails."
+  },
+  "loginDisclaimer": {
+    "message": "Ditt lösenord kommer att lagras i klartext på disken.",
+    "description": "Warning message shown when user is about to save credentials."
+  }
+}
